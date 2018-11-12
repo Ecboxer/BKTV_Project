@@ -1,0 +1,37 @@
+2018-11-12
+data engineering
+- understand variables
+  17 variables
+  -- FL_DATE
+  -- OP_UNIQUE_CARRIER
+  -- OP_CARRIER_FL_NUM
+  -- ORIGIN_AIRPORT_ID
+  -- DEST_AIRPORT_ID
+  -- DEST_WAC
+  -- CRS_DEP_TIME
+  -- DEP_TIME
+  -- CRS_ARR_TIME
+  -- ARR_TIME
+  -- CANCELLED
+  -- CANCELLATION_CODE
+  -- DISTANCE
+  -- CARRIER_DELAY
+  -- WEATHER_DELAY
+  -- NAS_DELAY
+  -- NAS_DELAY
+  -- LATE_AIRCRAFT_DELAY
+
+- main features
+  -- day of the week
+  -- departure delay (min)
+  -- arrival delay (min)
+
+- data cleaning
+  -- rename varibles
+  -- remove reasons for delays (5 variables)
+
+- freature engineering
+  -- parse day of the week (YYYY-MM-DD)
+  -- departure delay = DEP_TIME - CRS_DEP_TIME
+  -- arrival delay = ARR_TIME - CRS_ARR_TIME
+     
