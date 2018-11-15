@@ -34,4 +34,24 @@ data engineering
   -- parse day of the week (YYYY-MM-DD)
   -- departure delay = DEP_TIME - CRS_DEP_TIME
   -- arrival delay = ARR_TIME - CRS_ARR_TIME
-     
+ 
+2018-11-15
+- data
+  -- flights leave from NY to the other states
+  -- three months from October to December
+- variable values' range
+  -- arrival delay: [-120, 720], reason: T's graph
+  -- depature dealy:[-120, 720] 
+- structure
+  1. dep delay by date
+  2. dep delay by the days of the week, eric's pizza heatmap
+  3. dep delay by states, eric's pizz map, dep delay with number of flights
+  4. box plot of departure delays for each airline with number of flights width
+  5. dep delay by airports, maybe main cities, maybe airports in different regions, maybe airports have unique features of delay
+  6. dep delay by arrival delay
+- attention
+  -- make legends to make sure the range
+  -- we use the sample data set to generate the figures first, and then move on to the real data set
+
+  
+   
