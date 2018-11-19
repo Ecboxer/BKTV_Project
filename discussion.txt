@@ -53,5 +53,29 @@ data engineering
   -- make legends to make sure the range
   -- we use the sample data set to generate the figures first, and then move on to the real data set
 
+
+2018-11-19
+- Yanni's delay by day
+  -- two box plots
+  -- (pizza) heatmap  
+- Eric's dealy by the day of the week by hour
+  -- (pizza) heatmap 
+- Kai's delay by states
+  -- use arrival delay
+  -- (pizza) heatmap; density curve; box plots by regions (see Yanni's plot)
+  -- one more exploration
+  -- may link to airports
+- Costas's arrival vs depature
+  
+
+outline
+- Yanni's depature delay by date of the month
+- Eric's depature delay by the day of the week and depature time
+- Yanni's depature delay by airline
+- Costas's Dep delay vs arr delay - Nike hexagonal
+- Kai's arrival delay by states
+- Destnation Airport (Need further discussion based on the visulizatoion)
+
+
   
    
