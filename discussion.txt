@@ -69,9 +69,9 @@ data engineering
   
 
 outline
-- Yanni's depature delay by date of the month
-- Eric's depature delay by the day of the week and depature time
-- Yanni's depature delay by airline
+- Yanni's depature delay by date of the month (Uploaded)
+- Eric's depature delay by the day of the week and depature time (Uploaded)
+- Yanni's depature delay by airline (Uploaded)
 - Costas's Dep delay vs arr delay - Nike hexagonal
 - Kai's arrival delay by states
 - Destnation Airport (Need further discussion based on the visulizatoion)
