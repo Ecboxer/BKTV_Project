@@ -24,7 +24,7 @@ library(tidyverse)
 
 ```{r load data}
 df_sample <- read_csv('cleanest_sample.csv')
-df <- read_csv('clean.csv`)
+df <- read_csv('clean.csv')
 ```
 # delet NA rows, which mean the cancellation of the flights
 
@@ -41,6 +41,8 @@ df <- df %>% filter(-120 <= arr_delay <= 720 & -120 <= dep_delay <= 720)
 ```
 
 # Main analysis (Exploratory Data Analysis)
+
+
 
 # Executive summary (Presentaion-style)
 
