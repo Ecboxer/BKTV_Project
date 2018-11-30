@@ -1,0 +1,50 @@
+---
+title: "EDAV Project"
+group: Costa, Yannis, Eric, Kai
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE,
+                      message = FALSE,
+                      warning = FALSE)
+```
+
+```{r libraries}
+# import libraries used for this project
+library(tidyverse)
+```
+# Outline
+
+# Introduction
+
+# Description of data
+
+# Analysis of data quality
+
+```{r load data}
+df_sample <- read_csv('cleanest_sample.csv')
+df <- read_csv('clean.csv`)
+```
+# delet NA rows, which mean the cancellation of the flights
+
+
+
+```{r clean data}
+# delet NA rows, which mean the cancellation of the flights
+df_sample <- df_sample %>% filter(!is.na(dep_delay) & !is.na(arr_delay))
+df <- df %>% filter(!is.na(dep_delay) & !is.na(arr_delay))
+
+# subset data with relevent dep_delay and arr_delay values
+df_sample <- df_sample %>% filter(-120 <= arr_delay <= 720 & -120 <= dep_delay <= 720)
+df <- df %>% filter(-120 <= arr_delay <= 720 & -120 <= dep_delay <= 720)
+```
+
+# Main analysis (Exploratory Data Analysis)
+
+# Executive summary (Presentaion-style)
+
+# Interactive component
+
+# Conclusion
+
