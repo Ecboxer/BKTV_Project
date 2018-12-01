@@ -11,8 +11,9 @@ knitr::opts_chunk$set(echo = TRUE,
 ```
 
 ```{r libraries}
-# import libraries used for this project
+# import libraries
 library(tidyverse)
+library(lubridate)
 ```
 # Outline
 
@@ -21,23 +22,21 @@ library(tidyverse)
 # Description of data
 
 # Analysis of data quality
-
 ```{r load data}
+#import sampled and full data
 df_sample <- read_csv('cleanest_sample.csv')
 df <- read_csv('clean.csv')
 ```
-# delet NA rows, which mean the cancellation of the flights
 
-
-
+delete NA rows, which mean the cancellation of the flights
 ```{r clean data}
 # delet NA rows, which mean the cancellation of the flights
 df_sample <- df_sample %>% filter(!is.na(dep_delay) & !is.na(arr_delay))
 df <- df %>% filter(!is.na(dep_delay) & !is.na(arr_delay))
 
 # subset data with relevent dep_delay and arr_delay values
-df_sample <- df_sample %>% filter(-120 <= arr_delay <= 720 & -120 <= dep_delay <= 720)
-df <- df %>% filter(-120 <= arr_delay <= 720 & -120 <= dep_delay <= 720)
+df_sample <- df_sample %>% filter(arr_delay >= -120 & arr_delay <= 720 & dep_delay >= -120 & dep_delay <= 720)
+df <- df %>% filter(arr_delay >= -120 & arr_delay <= 720 & dep_delay >= -120 & dep_delay <= 720)
 ```
 
 # Main analysis (Exploratory Data Analysis)
