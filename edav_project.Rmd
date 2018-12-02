@@ -1,13 +1,16 @@
 ---
 title: "EDAV Project"
+output:
+  pdf_document: default
+  html_document: default
 group: Costa, Yannis, Eric, Kai
-output: html_document
 ---
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE,
                       message = FALSE,
-                      warning = FALSE)
+                      warning = FALSE,
+                      cache = TRUE)
 ```
 
 ```{r libraries}
@@ -22,21 +25,99 @@ library(lubridate)
 # Description of data
 
 # Analysis of data quality
+## [Pipeline](https://github.com/Ecboxer/BKTV_Project/blob/master/pipeline_opt.R)
+Having downloaded the data as three csv files (one for each of October, November and December 2017) we wrote an R script to construct features for departure and arrival delays and output two csvs, one of the full dataset and another of a representative random sample.  
+The steps of the pipeline are as follows:  
+* Bind the csv files of October, November and December flights by row.  
+* Rename the columns of the combined dataframe for easier access.  
+* Format departure and scheduled departure times from 'HH:MM' to 'YYYY:mm:dd HH:MM:00' and take their difference to get find departure delay, in minutes.  
+* Repeat the previous step for arrival and scheduled arrival times to find arrival delays.  
+Since the full data set contains 1.4 million rows, in the interest of quick computations and visualizations in the exploratory data analysis phase, we took a random sample of 150 000 rows from the processed data. 150 000 was arrived at as a compromise between the processing speed of a small sample and the representativeness of a large one.
+
 ```{r load data}
-#import sampled and full data
+#Import sampled and full datasets
 df_sample <- read_csv('cleanest_sample.csv')
 df <- read_csv('clean.csv')
 ```
 
-delete NA rows, which mean the cancellation of the flights
-```{r clean data}
-# delet NA rows, which mean the cancellation of the flights
-df_sample <- df_sample %>% filter(!is.na(dep_delay) & !is.na(arr_delay))
-df <- df %>% filter(!is.na(dep_delay) & !is.na(arr_delay))
+## Missing values
+```{r missing values}
+colSums(is.na(df)) / nrow(df)
+```
 
-# subset data with relevent dep_delay and arr_delay values
-df_sample <- df_sample %>% filter(arr_delay >= -120 & arr_delay <= 720 & dep_delay >= -120 & dep_delay <= 720)
-df <- df %>% filter(arr_delay >= -120 & arr_delay <= 720 & dep_delay >= -120 & dep_delay <= 720)
+Of the features included in our final dataset, departure time, arrival time, departure delay and arrival delay were missing values for 0.7% of observations. Cancellation code had missing values for 99% of observations.
+
+```{r delay missing values}
+extracat::visna(df)
+```
+
+The dominant missing data pattern is for observations to be missing only cancellation code. Infrequently, observations are missing departure and arrival times, but we felt that all observations missing either of those values could be removed without losing information about delay durations.
+
+```{r cancellation missing values}
+df %>% filter(is.na(canc_code) & cancelled == 1) %>% nrow()
+```
+
+No observations missing a cancellation code can easily be found to have been incorrectly entered, because there are no cases in which cancellation code is missing but the data tells us that the flight was actually cancelled.
+
+```{r cancellation look, fig.height=}
+df %>% filter(!is.na(canc_code)) %>%
+  group_by(canc_code) %>%
+  summarise(n = n()) %>%
+  ggplot() +
+  geom_bar(aes(reorder(canc_code, -n), n), stat='identity') +
+  xlab('canc_code')
+```
+
+Cancellation codes are encoded by cause of cancellation as follows: A Carrier, B Weather, C National Air System, D Security. Security cancellations accounted for a tiny proportion while weather cancellations were the most frequent. We opted to forgo further investigation of cancellations. Since these flights never departed, there is no delay information from any of these observations in the dataset.
+
+## Explain metadata
+The final features are as follows:  
+* date: flight date in the format YYYY-mm-dd  
+* carrier: a unique two-letter carrier code for each airline, ie 'AA' for American Airlines  
+* flight_num: a unique four-digit number for each flight  
+* origin: a unique five-digit number for each origin airport, with all of these located in New York State  
+* dest: similar to origin but for each destination airport and located in any US state  
+* dest_state: a two-digit code for the flight destination state or US territory  
+* sched_dep: scheduled departure time in the format YYYY-mm-dd HH:MM:00  
+* dep: actual departure time in the same format  
+* sched_arr: schedulaed arrival time in the same format  
+* arr: actual arrival time in the same format  
+* cancelled: indicator of flight cancellation, with 1 corresponding to a cancelled flight and 0 otherwise  
+* canc_code: specifies the reason for cancellation  
+* distance: distance between origin and destination airports, in miles  
+* weekday: a string corresponding to the day of the week of the flight date  
+* dep_delay: departure delay, in minutes. Negative values correspond to flights that departed before schedule, positive values with flights that departed after they were scheduled  
+* arr_delay: similar to dep_delay but for arrival delay  
+
+## Filtering
+For the remainder of the data exploration we removed observations with missing values in the departure and arrival delay features. Then, we removed those observations with departure or arrival delay less than 2 hours or greater than 6 hours. In processing the data there were a small percentage of flights which were scheduled to depart/arrive before midnight but had actual times after midnight (or were scheduled for after midnight but had actual times before). As a consequence of our method for calculating delay (taking the difference of scheduled and actual times), those observations came out with delays of magnitude plus-minus 1440 (the number of minutes in one day). Keeping those observations would introduce extreme outliers. Since this happened to about 1% of the data we decided to exclude these observations from the analysis.
+```{r exclude outliers}
+df %>% 
+  filter(dep_delay < -1200 | dep_delay > 1200 | arr_delay < -1200 | arr_delay > 1200) %>% 
+  nrow() / nrow(df)
+```
+
+### Insert Yiannis' scatter plot to justify cutting off at -120 and 720
+```{r filtering illustration}
+df_sample %>% 
+  ggplot() +
+  geom_point(aes(dep_delay, flight_num))
+```
+
+The decision to keep data with delays in the range [-120, 720] was in part due to the roundess of those values. In addition, the delay data tended to fall within that range so filtering here will serve to remove outliers from the remainder of our analysis.
+
+```{r clean data}
+# Delete NA rows, which indicate flight cancellations
+df_sample <- df_sample %>%
+  filter(!is.na(dep_delay) & !is.na(arr_delay))
+df <- df %>%
+  filter(!is.na(dep_delay) & !is.na(arr_delay))
+
+# Subset data with relevent dep_delay and arr_delay values
+df_sample <- df_sample %>%
+  filter(arr_delay >= -120 & arr_delay <= 720 & dep_delay >= -120 & dep_delay <= 720)
+df <- df %>%
+  filter(arr_delay >= -120 & arr_delay <= 720 & dep_delay >= -120 & dep_delay <= 720)
 ```
 
 # Main analysis (Exploratory Data Analysis)
@@ -49,3 +130,7 @@ df <- df %>% filter(arr_delay >= -120 & arr_delay <= 720 & dep_delay >= -120 & d
 
 # Conclusion
 
+#### Future direction
+* Cancellations, ie does the presence of cancelled flights increase the delays for flights that did depart?
+* Other origin airports
+* Full year/several years
