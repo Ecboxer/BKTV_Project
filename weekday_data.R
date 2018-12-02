@@ -1,6 +1,6 @@
 library(tidyverse)
 library(lubridate)
-df <- read_csv('clean_sample.csv')
+df <- read_csv('clean.csv')
 
 avg_delay <- df %>% filter(dep_delay >= -120 & dep_delay <= 720 & !is.na(dep_delay)) %>% 
   mutate(mean = mean(dep_delay)) %>% select(mean) %>% head(1)
