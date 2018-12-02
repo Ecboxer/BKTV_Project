@@ -25,7 +25,8 @@ library(lubridate)
 # Description of data
 
 # Analysis of data quality
-## [Pipeline](https://github.com/Ecboxer/BKTV_Project/blob/master/pipeline_opt.R)
+## Pipeline
+[__Here__](https://github.com/Ecboxer/BKTV_Project/blob/master/pipeline_opt.R) is our script.  
 Having downloaded the data as three csv files (one for each of October, November and December 2017) we wrote an R script to construct features for departure and arrival delays and output two csvs, one of the full dataset and another of a representative random sample.  
 The steps of the pipeline are as follows:  
 * Bind the csv files of October, November and December flights by row.  
@@ -59,7 +60,7 @@ df %>% filter(is.na(canc_code) & cancelled == 1) %>% nrow()
 
 No observations missing a cancellation code can easily be found to have been incorrectly entered, because there are no cases in which cancellation code is missing but the data tells us that the flight was actually cancelled.
 
-```{r cancellation look, fig.height=}
+```{r cancellation look}
 df %>% filter(!is.na(canc_code)) %>%
   group_by(canc_code) %>%
   summarise(n = n()) %>%
@@ -97,13 +98,12 @@ df %>%
   nrow() / nrow(df)
 ```
 
-### Insert Yiannis' scatter plot to justify cutting off at -120 and 720
-```{r filtering illustration}
+```{r filtering illustration, eval = FALSE}
 df_sample %>% 
   ggplot() +
-  geom_point(aes(dep_delay, flight_num))
+  geom_point(aes(dep_delay, flight_num), alpha=.2, shape=1)
 ```
-
+![](dep_delay.png)
 The decision to keep data with delays in the range [-120, 720] was in part due to the roundess of those values. In addition, the delay data tended to fall within that range so filtering here will serve to remove outliers from the remainder of our analysis.
 
 ```{r clean data}
@@ -121,10 +121,54 @@ df <- df %>%
 ```
 
 # Main analysis (Exploratory Data Analysis)
+```{r destination frequency}
+df_n <- df %>% group_by(dest) %>% 
+  summarise(n = n(),
+            total_delay = sum(dep_delay),
+            avg_delay = total_delay / n) %>% 
+  arrange(desc(n))
+```
+```{r number of destinations}
+df$dest %>% unique() %>% length() #How many airports in the data? 144
+```
+```{r destination cleveland}
+df_n %>% filter(n > 20000) %>% ggplot() +
+  geom_point(aes(reorder(dest, n), n, color=avg_delay), size=6) +
+  coord_flip()
+```
 
+14771 San Francisco International and 11618 Newark Liberty Intl
+
+```{r destination negative delay}
+df_n %>% filter(avg_delay < 0) %>% ggplot() +
+  geom_point(aes(reorder(dest, avg_delay), avg_delay, size=n)) +
+  coord_flip()
+```
+
+```{r destination zero delay}
+df_n %>% filter(avg_delay < 1 & avg_delay > -1) %>% ggplot() +
+  geom_point(aes(reorder(dest, avg_delay), avg_delay, size=n)) +
+  coord_flip()
+```
+
+```{r destination high frequency}
+df_n %>% filter(n > 25000) %>% ggplot() +
+  geom_point(aes(reorder(dest, avg_delay), avg_delay, size=n)) +
+  coord_flip()
+```
 
 
 # Executive summary (Presentaion-style)
+
+## Daily Departure Delays
+[__Here__](https://bl.ocks.org/ecboxer/6be5cf6fc44449823e08ca5f1b443935) is a visualization of the average departure delay for each date in the dataset. Each month is shown as a calendar heatmap with each week in a row starting on Monday and ending on Sunday. We used a Value Suppressing Uncertainty Scale (VSUP) which decreases the number of distinct colors according to increasing uncertainty, measured in standard mean error of delay time. Hover over a tile to show the precise departure delay.  
+Starting in October, we do not see a clear pattern to delays. Tuesdays and Wednesdays have low departure delays for all but one week, the 24th for Tuesdays and the 11th for Wednesdays. In November, there is a similarly varied distribution to delays. Note the scale changes across months, so the 3rd of November is encoded as high delay with a 10 minute average while the 12th of October has a similar average but lies closer to the middle of that month's distribution. The clearest pattern in December is the split between the beginning of the month and the final two weeks. After the 18th, delays are almost all on the higher-end, with the 30th having an average delay of 20 minutes (but also the highest uncertainty).  
+
+## Weekly Departure Delays
+[__Here__](https://bl.ocks.org/ecboxer/221d818a4b9fad4feb0ab14e7ca704a1) is a visualization of the average departure delay grouped by day of the week and hour of departure. It was constructed with the same VSUP scale as the daily departure delay visualization. Again, hovering over a tile shows the precise departure delay.  
+There are two patterns here: the distinction between weekdays and weekends, and an increase in delay length as a given day progresses. Weekends have a longer period of dark-blue than weekdays (corresponding to delays in the range of 3-9 minutes), and even in the hour before midnight do not reach the same magnitude of delay as do weekdays.  
+Across all days, until 9am average delays are small or negative. Afterwards there is a gradual increase in delays until we see an average delay length of 38 minutes in flights departing before midnight on Mondays.  
+Note: the choice was made to start the x-axis at 4am since at all previous times the standard mean errors were at least 0.1875 and their values were thus suppressed by our scale.
 
 # Interactive component
 
