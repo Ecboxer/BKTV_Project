@@ -53,6 +53,9 @@
 				d3.select("body").append("svg").attr("id", "main_cont");
 				d3.select("#main_cont").attr("width", chart_width).attr("height", chart_height).style("margin", "2.5%");
 
+				var option = d3.local();
+		    	option.set(main_cont, 1);
+
 				// Create Main Container's Labels
 				createLabels( "main_cont", "Departure Delay per Day of Month", "150", "25", "25px", "0" );
 				createLabels( "main_cont", "Days of the Month", "300", "675", "15px", "0" );
@@ -63,31 +66,18 @@
 				d3.select("#preview_g").append("svg").attr("id", "svg1");
 				d3.select("#preview_g").append("svg").attr("id", "svg2");
 				d3.select("#preview_g").append("svg").attr("id", "svg3");
-				d3.select("svg").append("svg").attr("id", "svg_10");
-				d3.select("svg").append("svg").attr("id", "svg_11");
-				d3.select("svg").append("svg").attr("id", "svg_12");
 
 				// Create Axis Scales
-				var xScale = d3.scalePoint()
-							   .domain([1,2,3,4,5,
-							   			6,7,8,9,10,
-							   			11,12,13,14,15,
-							   			16,17,18,19,20,
-							   			21,22,23,24,25,
-							   			26,27,28,29,30,31])
-							   .range([60,660]);
+				var xScale = d3.scalePoint().domain(d3.range(1,32)).range([60,660]).padding(4);
 				var xAxis = d3.axisBottom().scale(xScale);
 
 				var yScale = d3.scaleLinear().domain([-120,720]).range([175,0]);
 				var yAxis = d3.axisLeft().scale(yScale);
 
 				// Create remaining charts
-				createIncludedchart( dataset, "svg1", chart_width, reduced_height, 0, yAxis, xAxis, "October", "oct", 10, 10 );
-				createIncludedchart( dataset, "svg2", chart_width, reduced_height, reduced_height, yAxis, xAxis, "November", "nov", 11, 10 );
-				createIncludedchart( dataset, "svg3", chart_width, reduced_height, 2*reduced_height, yAxis, xAxis, "December", "dec", 12, 10 );
-				createIncludedchart( dataset, "svg_10", chart_width, chart_height, 0, yAxis, xAxis, "October", "oct", 10, 25);
-				createIncludedchart( dataset, "svg_11", chart_width, chart_height, 0, yAxis, xAxis, "November", "nov", 11, 25 );
-				createIncludedchart( dataset, "svg_12", chart_width, chart_height, 0, yAxis, xAxis, "December", "dec", 12, 25 );
+				createIncludedchart( dataset, "svg1", chart_width, reduced_height, 0, yAxis, xAxis, "October", "oct", 10, 25 );
+				createIncludedchart( dataset, "svg2", chart_width, reduced_height, reduced_height, yAxis, xAxis, "November", "nov", 11, 25 );
+				createIncludedchart( dataset, "svg3", chart_width, reduced_height, 2*reduced_height, yAxis, xAxis, "December", "dec", 12, 25 );
 
 				// Resample Dataset to reduce size for better D3 handling
 				function sampleDataset( data, month_select, temp ){
@@ -116,29 +106,13 @@
 				function createIncludedchart( data, chart_id, width, r_height, y_position, yAxis, xAxis, month_name, month_id, month_num, barrier ){
 					var dataset = sampleDataset( data,  month_num, barrier); 
 
-					// Distinct between preview mode and detailed
-					if ( r_height == 700 ){
+					d3.select("#" + chart_id).attr("width", width).attr("height", r_height).attr("x", "50").attr("y", y_position + 50);
+					d3.select("#" + chart_id).append("g").attr("id", "g" + chart_id);
 
-						d3.select("#" + chart_id).attr("width", "0").attr("height", "0").attr("x", "50").attr("y", y_position + 75);
-
-						d3.select("#" + chart_id).append("g").attr("id", "g" + chart_id);
-
-						yScale.range([550,0]);
-						yAxis.scale(yScale);
-						d3.select("#g" + chart_id).append("g").attr("class", "yAxis").attr("transform", "translate(50, 0)").call(yAxis);	
-						d3.select("#g" + chart_id).append("g").attr("class", "xAxis").attr("transform", "translate(0, 550)").call(xAxis);	
-
-					} else{
-						d3.select("#" + chart_id).attr("width", width).attr("height", r_height).attr("x", "50").attr("y", y_position + 50);
-
-						d3.select("#" + chart_id).append("g").attr("id", "g" + chart_id);
-
-						yScale.range([175,0]);
-						yAxis.scale(yScale);
-						d3.select("#g" + chart_id).append("g").attr("class", "yAxis").attr("transform", "translate(50, 0)").call(yAxis);
-						d3.select("#g" + chart_id).append("g").attr("class", "xAxis").attr("transform", "translate(0, 175)").call(xAxis);
-					}
-
+					yScale.range([175,0]);
+					yAxis.scale(yScale);
+					d3.select("#g" + chart_id).append("g").attr("class", "yAxis").attr("transform", "translate(50, 0)").call(yAxis);
+					d3.select("#g" + chart_id).append("g").attr("class", "xAxis").attr("transform", "translate(0, 175)").call(xAxis);
 
 					// Insert the data points
 					d3.select("#g" + chart_id).selectAll("dot")
@@ -154,63 +128,69 @@
 									        })
 		  								    .style("opacity", "0.5");
 
-		  			delete dataset;
-
 		  			// Create the "buttons" for detailed/preview mode
-		  			if ( r_height == 700 ){
-						d3.select("#g" + chart_id).append("text").text(month_name)
-						   .attr("id", chart_id + month_id + month_num)
-						   .attr("transform", "rotate(90)")
-						   .attr("x", "150").attr("y", "-700")
-						   .attr("font-family", "Courier New")
-						   .attr("font-size", "50px")
-						   .attr("fill", "black")
-						   .on("mouseover", function(){
-								d3.select("#" + chart_id + month_id + month_num).text("Click for back")
-			  						.attr("font-size", "30px")
-			  						.on("click", function(){
-			  						 	if (this.id.length == 7){var temp_id = this.id.slice(0, 4);} 
-			  						 	else{var temp_id = this.id.slice(0, 6);}
+					d3.select("#g" + chart_id).append("text").text(month_name)
+					   .attr("id", chart_id + month_id)
+					   .attr("transform", "rotate(90)")
+					   .attr("x", "15").attr("y", "-700")
+					   .attr("font-family", "Courier New")
+					   .attr("font-size", "30px")
+					   .attr("fill", "black")
+					   .on("mouseover", function(){
+							d3.select("#" + chart_id + month_id).text("Click for more")
+		  						.attr("font-size", "20px")
+		  						.on("click", function(){
+		  							if (this.id.length == 7){var temp_id = this.id.slice(0, 4);} 
 
-			  						 	d3.select("#" + temp_id).transition().duration(2000).attr("width", "0").attr("height", "0");
-										d3.select("#svg1").transition().duration(2000).attr("width", width).attr("height", "225");
-										d3.select("#svg2").transition().duration(2000).attr("width", width).attr("height", "225");
-										d3.select("#svg3").transition().duration(2000).attr("width", width).attr("height", "225");
-			  						});
-							})
-							.on("mouseout", function () {
-						        d3.select("#" + chart_id + month_id + month_num).text(month_name).attr("font-size", "50px");
-						    });
-					} else {
-						d3.select("#g" + chart_id).append("text").text(month_name)
-						   .attr("id", chart_id + month_id)
-						   .attr("transform", "rotate(90)")
-						   .attr("x", "15").attr("y", "-700")
-						   .attr("font-family", "Courier New")
-						   .attr("font-size", "30px")
-						   .attr("fill", "black")
-						   .on("mouseover", function(){
-								d3.select("#" + chart_id + month_id).text("Click for more")
-			  						.attr("font-size", "20px")
-			  						.on("click", function(){
-			  						 	if (this.id.length == 7){var temp_id = this.id.slice(0, 4);} 
-			  						 	else{var temp_id = this.id.slice(0, 6);}
+		  							if ( option.get(main_cont) == 1 ){
+		  							
+		  								if(temp_id == "svg1"){temp_id_2 = "svg2";	temp_id_3 = "svg3";} 
+		  								else if (temp_id  == "svg2"){temp_id_2 = "svg1";	temp_id_3 = "svg3";} 
+		  								else if (temp_id  == "svg3"){temp_id_2 = "svg1";	temp_id_3 = "svg2";}
 
-			  						 	if( temp_id == "svg1"){temp_id = "svg_10";} 
-			  						 	else if( temp_id == "svg2"){temp_id = "svg_11";} 
-			  						 	else if( temp_id == "svg3"){temp_id = "svg_12";}
+			  						 	yScale.range([550,0]);
+										yAxis.scale(yScale);
 
-			  						 	d3.select("#svg1").transition().duration(2000).attr("width", "0").attr("height", "0");
-										d3.select("#svg2").transition().duration(2000).attr("width", "0").attr("height", "0");
-										d3.select("#svg3").transition().duration(2000).attr("width", "0").attr("height", "0");
+										d3.select("#g" + temp_id).call(yAxis);
+										d3.select("#g" + temp_id).select(".xAxis").attr("transform", "translate(0, 550)").call(xAxis);
 
-			  						 	d3.select("#" + temp_id).transition().duration(2000).attr("width", width).attr("height", "900");		 		
-			  						});
-							})
-							.on("mouseout", function () {
-						        d3.select("#" + chart_id + month_id).text(month_name).attr("font-size", "30px");
-						    });
-					}
+		  						 		d3.select("#g" + temp_id).selectAll("circle").attr("cy", function(d) {return yScale(d.dep_delay);});
+
+		  						 		d3.select("#" + temp_id).transition().attr("height", "700").attr("y", 75);
+		  								d3.select("#" + this.id).attr("x", "300");
+
+		  								d3.select("#" + temp_id_2).transition().attr("width", "0").attr("height", "0");
+										d3.select("#" + temp_id_3).transition().attr("width", "0").attr("height", "0");
+
+		  						 		option.set(main_cont, 0);
+
+		  						 	} else if ( option.get(main_cont) == 0 ){
+
+		  						 		if(temp_id == "svg1"){temp_id_2 = "svg2";	temp_id_3 = "svg3"; temp_y = 0;} 
+		  								else if (temp_id  == "svg2"){temp_id_2 = "svg1";	temp_id_3 = "svg3"; temp_y = 200;} 
+		  								else if (temp_id  == "svg3"){temp_id_2 = "svg1";	temp_id_3 = "svg2"; temp_y = 400;}
+
+	  									yScale.range([175,0]);
+										yAxis.scale(yScale);
+
+										d3.select("#g" + temp_id).call(yAxis);
+										d3.select("#g" + temp_id).select(".xAxis").attr("transform", "translate(0, 175)").call(xAxis);
+
+										d3.select("#g" + temp_id).selectAll("circle").attr("cy", function(d) {return yScale(d.dep_delay);});
+
+	  									d3.select("#" + temp_id).transition().attr("height", "225").attr("y", temp_y + 50);
+	  									d3.select("#" + this.id).attr("x", "175");
+
+										d3.select("#" + temp_id_2).transition().attr("width", width).attr("height", "225");
+										d3.select("#" + temp_id_3).transition().attr("width", width).attr("height", "225");
+
+										option.set(main_cont, 1);
+		  						 	}
+		  						});
+						})
+						.on("mouseout", function () {
+					        d3.select("#" + chart_id + month_id).text(month_name).attr("font-size", "30px");
+					    });
 				}
 			};
 

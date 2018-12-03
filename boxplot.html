@@ -61,7 +61,6 @@
 						.attr("font-family", "Courier New")
 						.attr("font-size", f_size)
 						.attr("fill", "black");	
-
 			}
 
 			
@@ -158,41 +157,27 @@
 					d3.select("#main_cont").append("g").attr("id", "g" + data.carrier);
 					outliers = data.outliers_d;
 
-					d3.select("#g" + data.carrier).append("line")
-								.attr("id", data.carrier)
-								.attr("x1", xScale(data.carrier))
-								.attr("y1", yScale(data.q1_d))
-								.attr("x2", xScale(data.carrier))
-								.attr("y2", yScale(data.q3_d))
-								.attr("stroke", colors_vals.pop())
-								.attr("stroke-width", ((data.delay_size + data.early_size)/dataset.length)*400)
+					d3.select("#g" + data.carrier).append("line").attr("id", data.carrier)
+								.attr("x1", xScale(data.carrier)).attr("y1", yScale(data.q1_d))
+								.attr("x2", xScale(data.carrier)).attr("y2", yScale(data.q3_d))
+								.attr("stroke", colors_vals.pop()).attr("stroke-width", ((data.delay_size + data.early_size)/dataset.length)*400)
 								.on("click", function(){
-		  						 	d3.select("#main_cont").transition().duration(2000).attr("width", "0").attr("height", "0");
+		  						 	d3.select("#main_cont").transition().attr("width", "0").attr("height", "0");
 		  						 	createSingleBox(statistics, box_width, box_height, this.id);
 		  						});
 
-					d3.select("#g" + data.carrier).append("line")
-								.attr("id", data.carrier)
-								.attr("x1", xScale(data.carrier))
-								.attr("y1", yScale(data.median_d-1))
-								.attr("x2", xScale(data.carrier))
-								.attr("y2", yScale(data.median_d+1))
-								.attr("stroke", "black")
-								.attr("stroke-width", ((data.delay_size + data.early_size)/dataset.length)*400)
-								.on("click", function(){
-		  						 	d3.select("#main_cont").transition().duration(2000).attr("width", "0").attr("height", "0");
-		  						});
+					d3.select("#g" + data.carrier).append("line").attr("id", data.carrier)
+								.attr("x1", xScale(data.carrier)).attr("y1", yScale(data.median_d-1))
+								.attr("x2", xScale(data.carrier)).attr("y2", yScale(data.median_d+1))
+								.attr("stroke", "black").attr("stroke-width", ((data.delay_size + data.early_size)/dataset.length)*400)
+								.on("click", function(){d3.select("#main_cont").transition().attr("width", "0").attr("height", "0");});
 
-					d3.select("#g" + data.carrier).append("line").attr("x1", xScale(data.carrier))
-																 .attr("y1", yScale(data.r0_d))
-																 .attr("x2", xScale(data.carrier))
-																 .attr("y2", yScale(data.q1_d))
+					d3.select("#g" + data.carrier).append("line").attr("x1", xScale(data.carrier)).attr("y1", yScale(data.r0_d))
+																 .attr("x2", xScale(data.carrier)).attr("y2", yScale(data.q1_d))
 																 .attr("stroke", "black");
 
-					d3.select("#g" + data.carrier).append("line").attr("x1", xScale(data.carrier))
-																 .attr("y1", yScale(data.r1_d))
-																 .attr("x2", xScale(data.carrier))
-																 .attr("y2", yScale(data.q3_d))
+					d3.select("#g" + data.carrier).append("line").attr("x1", xScale(data.carrier)).attr("y1", yScale(data.r1_d))
+																 .attr("x2", xScale(data.carrier)).attr("y2", yScale(data.q3_d))
 																 .attr("stroke", "black");
 
 					d3.select("#g" + data.carrier).selectAll("dot")
@@ -240,8 +225,8 @@
 							.attr("y2", yScale("Late")).attr("x2", xScale(data[0].q3_d))
 							.attr("stroke", "red").attr("stroke-width", (data[0].delay_size/data[0].overall_size)*400)
 							.on("click", function(){
-	  						 	d3.selectAll("#detailed_cont").remove();
-	  						 	d3.select("#main_cont").transition().duration(2000).attr("width", width).attr("height", height);
+	  						 	d3.selectAll("#detailed_cont").transition().remove();
+	  						 	d3.select("#main_cont").transition().attr("width", width).attr("height", height);
 	  						});
 
 				d3.select("#g1" + box_id).append("line")
@@ -249,8 +234,8 @@
 							.attr("y2", yScale("Late")).attr("x2", xScale(data[0].median_d+1))
 							.attr("stroke", "black").attr("stroke-width", (data[0].delay_size/data[0].overall_size)*400)
 							.on("click", function(){
-	  						 	d3.selectAll("#detailed_cont").remove();
-	  						 	d3.select("#main_cont").transition().duration(2000).attr("width", width).attr("height", height);
+	  						 	d3.selectAll("#detailed_cont").transition().remove();
+	  						 	d3.select("#main_cont").transition().attr("width", width).attr("height", height);
 	  						});
 
 				d3.select("#g1" + box_id).append("line")
@@ -280,8 +265,8 @@
 							.attr("y2", yScale("Early")).attr("x2", xScale(data[0].q3_e))
 							.attr("stroke", "lightgreen").attr("stroke-width", (data[0].early_size/data[0].overall_size)*400)
 							.on("click", function(){
-	  						 	d3.selectAll("#detailed_cont").remove();
-	  						 	d3.select("#main_cont").transition().duration(2000).attr("width", width).attr("height", height);
+	  						 	d3.selectAll("#detailed_cont").transition().remove();
+	  						 	d3.select("#main_cont").transition().attr("width", width).attr("height", height);
 	  						});
 
 				d3.select("#g2" + box_id).append("line")
@@ -289,8 +274,8 @@
 							.attr("y2", yScale("Early")).attr("x2", xScale(data[0].median_e+1))
 							.attr("stroke", "black").attr("stroke-width", (data[0].early_size/data[0].overall_size)*400)
 							.on("click", function(){
-	  						 	d3.selectAll("#detailed_cont").remove();
-	  						 	d3.select("#main_cont").transition().duration(2000).attr("width", width).attr("height", height);
+	  						 	d3.selectAll("#detailed_cont").transition().remove();
+	  						 	d3.select("#main_cont").transition().attr("width", width).attr("height", height);
 	  						});
 
 				d3.select("#g2" + box_id).append("line")
