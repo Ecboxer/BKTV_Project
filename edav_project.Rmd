@@ -1,9 +1,9 @@
 ---
 title: "EDAV Project"
 output:
-  pdf_document: default
   html_document: default
-group: Costas, Ioannis, Eric, Kai
+  pdf_document: default
+group: Costa, Yannis, Eric, Kai
 ---
 
 ```{r setup, include=FALSE}
@@ -17,22 +17,12 @@ knitr::opts_chunk$set(echo = TRUE,
 # import libraries
 library(tidyverse)
 library(lubridate)
+scale_colour_continuous <- scale_colour_viridis_c
 theme_set(theme_bw())
 ```
 # Outline
 
 # Introduction
-
-In today’s day and age where the consumer has zero tolerance for inefficiencies, one can’t help but wonder how flight delays are still prevalent. How can multimillion dollar airlines fail to anticipate these at a consistent basis? It is certainly to the benefit of all parties involved that they don’t occur, so how come one in three flights is delayed? As frequent flyers and curious data scientists, we set out to explore the natural phenomenon that is flight delays and its causes. Can we find a common denominator amongst delays?
-
-The team consists of four members where each analyzed a specific variable’s impact on flight delay:
-- Eric Boxer: time of departure.
-- Kai Kang: airport.
-- Ioannis Tzemos: distance.
-- Costas Vafeades: day of the week.
-
-On top of the contributions listed above, every member took it upon himself to further add value. A visualization aficionado, Eric produced half of the interactive plots found in our main analysis and maintained our project repository. Kai, a teamwork veteran, kept notes and led the discussions in our weekly meetings. Our efficiency expert Ioannis produced the other half of the interactive plots and optimized our pipeline’s run-time. And lastly, in addition to setting up the pipeline along with Eric, Costas produced agendas for every meeting, making sure the group is always on track.  
-
 
 # Description of data
 
@@ -77,7 +67,7 @@ df %>% filter(!is.na(canc_code)) %>%
   group_by(canc_code) %>%
   summarise(n = n()) %>%
   ggplot() +
-  geom_bar(aes(reorder(canc_code, -n), n), stat='identity') +
+  geom_bar(aes(reorder(canc_code, -n), n), color='#774184', stat='identity') +
   xlab('canc_code')
 ```
 
@@ -133,54 +123,12 @@ df <- df %>%
 ```
 
 # Main analysis (Exploratory Data Analysis)
-
-Looking at the weekdays:
-```{r Distribution of Flights}
-num_flights <- df %>% group_by(weekday) %>% summarize(count = n())
-num_flights$perc <- num_flights$count / sum(num_flights$count)
-
-ggplot(num_flights, aes(weekday, perc)) +
-  # plots
-  geom_col(fill = '#1FA088') +
-  # labels
-  ggtitle('Percentage of Flights on Each Day') +
-  xlab("Day of the Week") +
-  ylab("Percentage of Flights")
-
+## Destination
+```{r number of destinations}
+df$dest %>% unique() %>% length() #How many airports in the data?
 ```
 
-Flights seem to be relatively evenly distributed over all days except Saturdays. This somewhat makes sense, as usually travellers with flights on Saturdays are more likely to be for vacational purposes - and they are more likely to depart on Friday for their destination. How do delays relate to days of the week?
-
-```{r}
-ggplot(df, aes(x=weekday, y=dep_delay)) + geom_boxplot(varwidth=TRUE, fill = '#1FA088') +
-  ggtitle('Distribution of Delay on Each Day') +
-  xlab("") +
-  ylab("Delay in Minutes")
-```
-
-The size of our dataset makes it hard for us to visualize the distribution effectively and identify any patterns. One way of going about this is taking the log of our y-axis. Of course, logging negative values would result in erroneous results so we'll focus on positive delays for now. 
-
-```{r}
-ggplot(subset(df, df$dep_delay >0), aes(x=weekday, y=log(dep_delay))) + geom_boxplot(varwidth=TRUE, fill = '#1FA088') +
-  ggtitle('Distribution of Positive Delay on Each Day') +
-  xlab("") +
-  ylab("log(Delay in Minutes)")
-```
-
-Evidently, delays are very similar over each day so there's no significant observation to be made. ??? How do negative delays relate to this?
-
-```{r}
-df$pos_delay <- ifelse(df$dep_delay > 0, 'Positive', 'Negative')
-
-ggplot(df, aes(x=weekday, y=log(abs(dep_delay)))) + geom_boxplot(aes(fill=factor(pos_delay)), varwidth=TRUE) +
-  scale_y_continuous(name = 'log(Delay in Minutes)') + xlab('Day of the Week') + guides(fill=guide_legend(title="Delay")) +
-  scale_fill_manual(values=c('#fce640', '#1FA088'))
-```
-
-It appears that flights are more likely to depart earlier rather than later, but positive delays have greater spread. Early departures also don't seem to vary by day. 
-
-
-
+To begin exploring the data on destination, with 300 unique values, we first construct a dataframe grouped by destination and with features for the number of flights, the total departure delay and the mean departure delay.
 ```{r destination frequency}
 df_n <- df %>% group_by(dest) %>% 
   summarise(n = n(),
@@ -188,41 +136,42 @@ df_n <- df %>% group_by(dest) %>%
             avg_delay = total_delay / n) %>% 
   arrange(desc(n))
 ```
-```{r number of destinations}
-df$dest %>% unique() %>% length() #How many airports in the data? 144
-```
+
+With the dataframe in hand, first we will look at those destinations with the most flights, more than 20 000 over the period.
 ```{r destination cleveland}
 df_n %>% filter(n > 20000) %>% ggplot() +
-  geom_point(aes(reorder(dest, n), n, color=avg_delay), size=6) +
-  coord_flip()
+  geom_point(aes(reorder(dest, avg_delay), avg_delay, size=n, color=avg_delay)) +
+  coord_flip() + scale_color_viridis_c()
 ```
 
-14771 San Francisco International and 11618 Newark Liberty Intl
+11618 Newark Liberty International stands out as having the highest average delay of the lot. 14771 San Francisco International has a smaller average delay than Newark, but it stands out among those airports with more than 40 000 flights. Apart from San Francisco these airports have average delays in the neightborhood of five minutes. It is also noticeable that none of the most frequent destinations have a negative average delay.
 
 ```{r destination negative delay}
 df_n %>% filter(avg_delay < 0) %>% ggplot() +
-  geom_point(aes(reorder(dest, avg_delay), avg_delay, size=n)) +
+  geom_point(aes(reorder(dest, avg_delay), avg_delay, size=n, color=avg_delay)) +
   coord_flip()
 ```
 
+Here we looked at those destinations with negative average delays. According to our size scale, the frequency of flights to these airports is more than an order of magnitude lower than in the previous plot. Two airports stand out in terms of average delay, 10165 Adak Island, Alaska and 10754 Barrow, Alaska. 
 ```{r destination zero delay}
 df_n %>% filter(avg_delay < 1 & avg_delay > -1) %>% ggplot() +
-  geom_point(aes(reorder(dest, avg_delay), avg_delay, size=n)) +
+  geom_point(aes(reorder(dest, avg_delay), avg_delay, size=n, color=avg_delay)) +
   coord_flip()
 ```
 
+Among those airports with average delays within one minute of zero, the number of flights also tends to be small, no more than 3 000.
 ```{r destination high frequency}
-df_n %>% filter(n > 25000) %>% ggplot() +
-  geom_point(aes(reorder(dest, avg_delay), avg_delay, size=n)) +
+df_n %>% filter(avg_delay > 10) %>% ggplot() +
+  geom_point(aes(reorder(dest, avg_delay), avg_delay, size=n, color=avg_delay)) +
   coord_flip()
 ```
 
-
-How do departure delay and arrival delay relate to each other? Is it possible that the pilot makes up for the delay with a shorter flight, or is it a sign that the flight is going to take even longer? 
-
-
-Our data
-
+When we filter to those airports with average delays greater than ten minutes, airport 11618 Newark stand out as by far the most popular destination in this bracket. As with the negative delay visualization, there are a small number of outliers in terms of average delay:  
+* 13388 Mammoth Lakes, California  
+* 15295 Toledo, OH  
+* 13964 North Bend/Coos Bay, Oregon  
+* 10372 Aspen, Colorado  
+Mammoth Lakes and Aspen are both ski resort towns so it might be interesting to look at the average delays in the summer to see if there is a reversion to the mean during warmer months.  
 
 # Executive summary (Presentaion-style)
 
@@ -235,18 +184,6 @@ Starting in October, we do not see a clear pattern to delays. Tuesdays and Wedne
 There are two patterns here: the distinction between weekdays and weekends, and an increase in delay length as a given day progresses. Weekends have a longer period of dark-blue than weekdays (corresponding to delays in the range of 3-9 minutes), and even in the hour before midnight do not reach the same magnitude of delay as do weekdays.  
 Across all days, until 9am average delays are small or negative. Afterwards there is a gradual increase in delays until we see an average delay length of 38 minutes in flights departing before midnight on Mondays.  
 Note: the choice was made to start the x-axis at 4am since at all previous times the standard mean errors were at least 0.1875 and their values were thus suppressed by our scale.
-
-## Arrival and Departure Delays
-```{r Graph 6}
-ggplot(df, aes(dep_delay, arr_delay)) +
-  geom_hex(bins = 50) + 
-  scale_fill_gradientn(colours = viridis(5, direction = 1)) +
-  xlab('Departure Delay in Minutes') + 
-  ylab('Arrival Delay in Minutes') +
-  guides(fill=guide_legend(title="Frequency"))
-
-```
-It appears that there's generally a linear relationship between the two variables where the higher the departure delay, the higher the arrival delay. There are some exceptions to this, and it's important to note that a big number of flights have a significantly high arrival delay despite having almost no departure delay.
 
 # Interactive component
 
