@@ -1,9 +1,9 @@
 ---
 title: "EDAV Project"
 output:
-  html_document: default
   pdf_document: default
-group: Costa, Yannis, Eric, Kai
+  html_document: default
+group: Costas, Ioannis, Eric, Kai
 ---
 
 ```{r setup, include=FALSE}
@@ -18,9 +18,9 @@ knitr::opts_chunk$set(echo = TRUE,
 library(tidyverse)
 library(lubridate)
 library(viridis)
-scale_colour_continuous <- scale_colour_viridis_c
 theme_set(theme_bw())
 ```
+# Outline
 
 # Introduction
 
@@ -30,9 +30,10 @@ The team consists of four members where each analyzed a specific variable’s im
 - Eric Boxer: time, date, day of the week, destination.
 - Kai Kang: destination airport, destination states.
 - Ioannis Tzemos: distance ................
-- Costas Vafeades: day of the week, makeup delay, arrival delay.
+- Costas Vafeades: day of the week, makeup delay, carrier and destination popularity.
 
 On top of the contributions listed above, every member took it upon himself to further add value. A visualization aficionado, Eric produced half of the interactive plots found in our main analysis and maintained our project repository. Kai, a teamwork veteran, kept notes and led the discussions in our weekly meetings. Our efficiency expert Ioannis produced the other half of the interactive plots and optimized our pipeline’s run-time. Finally, as meticulous as can be, Costas provided structure by producing agendas and schedules for the group and set up the data pipeline with Eric.
+
 
 # Description of data
 
@@ -64,24 +65,24 @@ Of the features included in our final dataset, departure time, arrival time, dep
 extracat::visna(df)
 ```
 
-The dominant missing data pattern is for observations to be lacking only cancellation code. Infrequently, observations are missing departure and arrival times, but we felt that all observations missing either of those values could be removed without losing information about delay durations.
+The dominant missing data pattern is for observations to be missing only cancellation code. Infrequently, observations are missing departure and arrival times, but we felt that all observations missing either of those values could be removed without losing information about delay durations.
 
 ```{r cancellation missing values}
 df %>% filter(is.na(canc_code) & cancelled == 1) %>% nrow()
 ```
 
-There are no cases in which cancellation code is missing but the data tells us that the flight was actually cancelled. That would have been a clear signal that some observations were incorrectly entered, as it is we will assume that the data on cancellations is accurate.
+No observations missing a cancellation code can easily be found to have been incorrectly entered, because there are no cases in which cancellation code is missing but the data tells us that the flight was actually cancelled.
 
 ```{r cancellation look}
 df %>% filter(!is.na(canc_code)) %>%
   group_by(canc_code) %>%
   summarise(n = n()) %>%
   ggplot() +
-  geom_bar(aes(reorder(canc_code, -n), n), fill='#774184', stat='identity') +
+  geom_bar(aes(reorder(canc_code, -n), n), stat='identity') +
   xlab('canc_code')
 ```
 
-Cancellation codes are categorised by cause of cancellation as follows: A Carrier, B Weather, C National Air System, D Security. Security cancellations accounted for a tiny proportion while weather cancellations were the most frequent. We opted to forgo further investigation of cancellation. Since these flights never departed, there is no delay information from any of these observations in this dataset.
+Cancellation codes are encoded by cause of cancellation as follows: A Carrier, B Weather, C National Air System, D Security. Security cancellations accounted for a tiny proportion while weather cancellations were the most frequent. We opted to forgo further investigation of cancellations. Since these flights never departed, there is no delay information from any of these observations in the dataset.
 
 ## Explain metadata
 The final features are as follows:  
@@ -103,7 +104,7 @@ The final features are as follows:
 * arr_delay: similar to dep_delay but for arrival delay  
 
 ## Filtering
-For the remainder of the data exploration we removed observations with missing values in the departure and arrival delay features. Then, we removed those observations with departure or arrival delay less than 2 hours or greater than 6 hours. In processing the data there were a small percentage of flights which were scheduled to depart before midnight but had actual times after midnight (or were scheduled for after midnight but had actual times before). As a consequence of our method for calculating delay (taking the difference of scheduled and actual times), those observations came out with delays of magnitude plus-minus 1440 (the number of minutes in one day). Keeping those observations would introduce extreme outliers. Since this happened to about 1% of the data we decided to exclude these observations from the analysis.
+For the remainder of the data exploration we removed observations with missing values in the departure and arrival delay features. Then, we removed those observations with departure or arrival delay less than 2 hours or greater than 6 hours. In processing the data there were a small percentage of flights which were scheduled to depart/arrive before midnight but had actual times after midnight (or were scheduled for after midnight but had actual times before). As a consequence of our method for calculating delay (taking the difference of scheduled and actual times), those observations came out with delays of magnitude plus-minus 1440 (the number of minutes in one day). Keeping those observations would introduce extreme outliers. Since this happened to about 1% of the data we decided to exclude these observations from the analysis.
 ```{r exclude outliers}
 df %>% 
   filter(dep_delay < -1200 | dep_delay > 1200 | arr_delay < -1200 | arr_delay > 1200) %>% 
@@ -115,9 +116,8 @@ df_sample %>%
   ggplot() +
   geom_point(aes(dep_delay, flight_num), alpha=.2, shape=1)
 ```
-![](dep_delay.png)  
-
-The decision to keep data with delays in the range [-120, 720] was a consequence of a tendency for data to fall within that range. Filtering within this range will serve to remove outliers from the remainder of our analysis.  
+![](dep_delay.png)
+The decision to keep data with delays in the range [-120, 720] was in part due to the roundess of those values. In addition, the delay data tended to fall within that range so filtering here will serve to remove outliers from the remainder of our analysis.
 
 ```{r clean data}
 # Delete NA rows, which indicate flight cancellations
@@ -133,7 +133,8 @@ df <- df %>%
   filter(arr_delay >= -120 & arr_delay <= 720 & dep_delay >= -120 & dep_delay <= 720)
 ```
 
-# Main analysis (Exploratory Data Analysis)  
+# Main analysis (Exploratory Data Analysis)
+
 Our data exploration starts by first looking at variables that might help explain the delay:
 - Date
 - Day of the Week
@@ -143,6 +144,7 @@ Our data exploration starts by first looking at variables that might help explai
 - Carrier
 Naturally, we then proceed to examine whether delays can be ammended for by examining its relationship with the following variables:
 - Arrival Delay
+- Airline
 - Destination Airport
 - Destination State
 
@@ -210,21 +212,53 @@ DISTANCE PLOTS
 ```{r}
 top_airports <- df %>% group_by(dest) %>% summarize(num_flights = n())
 top_airports <- top_airports[order(-top_airports$num_flights), ]
-head(top_airports, 10)
+top_airports <- head(top_airports, 5)
+last_airports <- df %>% group_by(dest) %>% summarize(num_flights = n())
+last_airports <- subset(last_airports, last_airports$num_flights > 100)
+last_airports <- last_airports[order(last_airports$num_flights), ]
+last_airports <- head(last_airports, 5)
+df$pop_dest <- ifelse(df$dest %in% top_airports$dest, "Popular", 0)
+df$pop_dest <- ifelse(df$dest %in% last_airports$dest, "Unpopular", df$pop_dest)
+head(subset(df, df$pop_dest != 0), 5)
 ```
 
 We can also visualize the distribution of departure delay in our top airports in order to see if flights are more likely to be delayed when headed to more popular destinations.
 
 ```{r}
-ggplot(subset(df, df$dest %in% head(top_airports$dest, 5)), aes(x=factor(dest), y=log(dep_delay))) + geom_boxplot(varwidth=TRUE, fill = '#774184') +
-  ggtitle('Distribution of Positive Delay in the Top 5 Airports') +
-  xlab("") +
+ggplot(subset(df, df$pop_dest != 0), aes(x=factor(dest), y=log(dep_delay))) + geom_boxplot(varwidth=TRUE, fill = '#774184') +
+  ggtitle('Distribution of Positive Delay in the busiest and least busiest Airports') +
+  facet_grid(. ~ pop_dest) +
+  xlab("Airport") +
   ylab("log(Delay in Minutes)")
 ```
 
+The delay distribution varies very little between the top 5 airports. The delay distribution between popular and unpopular airports does not differ as much as we hoped, so there's no insight to be made here. 
+
+
 ### Carrier
 
-CARRIER PLOTS
+```{r}
+top_carriers <- df %>% group_by(carrier) %>% summarize(num_flights = n())
+top_carriers <- top_carriers[order(-top_carriers$num_flights), ]
+top_carriers <- head(top_carriers, 5)
+last_carriers <- df %>% group_by(carrier) %>% summarize(num_flights = n())
+last_carriers <- subset(last_carriers, last_carriers$num_flights > 100)
+last_carriers <- last_carriers[order(last_carriers$num_flights), ]
+last_carriers <- head(last_carriers, 5)
+df$pop_carrier <- ifelse(df$carrier %in% top_carriers$carrier, "Popular", 0)
+df$pop_carrier <- ifelse(df$carrier %in% last_carriers$carrier, "Unpopular", df$pop_carrier)
+head(subset(df, df$pop_carrier != 0), 5)
+```
+
+```{r}
+ggplot(subset(df, df$pop_carrier != 0), aes(x=factor(carrier), y=log(dep_delay))) + geom_boxplot(varwidth=TRUE, fill = '#774184') +
+  ggtitle('Distribution of Positive Delay in the busiest and least busiest Airlines') +
+  facet_grid(. ~ pop_carrier) +
+  xlab("Airline") +
+  ylab("log(Delay in Minutes)")
+```
+
+The popularity of the airline also doesn't seem to play a factor on the departure delay. 
 
 SOME DISCUSSION RE: CAUSAL VARIABLES AND HOW THEY AFFECT THE DEPARTURE DELAY. 
 
@@ -248,13 +282,49 @@ We can construct a variable called diff_delay that indicates the difference betw
 df$diff_delay <- df$dep_delay - df$arr_delay
 ```
 
-### Destination Airport
+### Airline
 
-```{r number of destinations}
-df$dest %>% unique() %>% length() #How many airports in the data?
+```{r}
+df$pos_makeup <- ifelse(df$diff_delay >= 0, "Positive", "Negative")
+df$pos_makeup <- factor(df$pos_makeup)
+
+ggplot(subset(df, df$pop_carrier != 0 & df$pos_makeup == 'Positive'), aes(x=factor(carrier), y=log(dep_delay))) + geom_boxplot(varwidth=TRUE, fill = '#774184') +
+  ggtitle('Distribution of Positive Makeup Delay in the busiest and least busy Airlines') +
+  facet_grid(. ~ pop_carrier) +
+  xlab("Airline") +
+  ylab("log(Positive Makeup Delay in Minutes)")
 ```
 
-To begin exploring the data on destination, with 300 unique values, we first construct a dataframe grouped by destination and with features for the number of flights, the total departure delay and the mean departure delay.
+
+### Destination Airport
+```{r}
+ggplot(subset(df, df$pop_dest != 0 & df$pos_makeup == 'Positive'), aes(x=factor(dest), y=log(dep_delay))) + geom_boxplot(varwidth=TRUE, fill = '#774184') +
+  ggtitle('Distribution of Makeup Delay in the busiest and least busy Airports') +
+  facet_grid(. ~ pop_dest) +
+  xlab("Airport") +
+  ylab("log(Positive Makeup Delay in Minutes)")
+```
+
+
+
+PLOTS SHOWING RELATIONSHIP BETWEEN ARR DELAY, DEP DELAY AND DESTINATION AIRPORT
+
+### Destination State
+
+PLOTS SHOWING RELATIONSHIP BETWEEN ARR DELAY, DEP DELAY AND DESTINATION STATE
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 ```{r destination frequency}
 df_n <- df %>% group_by(dest) %>% 
@@ -263,46 +333,36 @@ df_n <- df %>% group_by(dest) %>%
             avg_delay = total_delay / n) %>% 
   arrange(desc(n))
 ```
-
-With the dataframe in hand, first we will look at those destinations with the most flights, more than 20 000 over the period.
+```{r number of destinations}
+df$dest %>% unique() %>% length() #How many airports in the data? 144
+```
 ```{r destination cleveland}
 df_n %>% filter(n > 20000) %>% ggplot() +
-  geom_point(aes(reorder(dest, avg_delay), avg_delay, size=n, fill=avg_delay), shape=21, alpha=.7) +
-  coord_flip() + scale_fill_viridis_c()
+  geom_point(aes(reorder(dest, n), n, color=avg_delay), size=6) +
+  coord_flip()
 ```
 
-11618 Newark Liberty International stands out as having the highest average delay of the lot. 14771 San Francisco International has a smaller average delay than Newark, but it stands out among those airports with more than 40 000 flights. Apart from San Francisco these airports have average delays in the neightborhood of five minutes. It is also noticeable that none of the most frequent destinations have a negative average delay.
+14771 San Francisco International and 11618 Newark Liberty Intl
 
 ```{r destination negative delay}
 df_n %>% filter(avg_delay < 0) %>% ggplot() +
-  geom_point(aes(reorder(dest, avg_delay), avg_delay, size=n, fill=avg_delay), shape=21, alpha=.7) +
-  coord_flip() + scale_fill_viridis_c()
+  geom_point(aes(reorder(dest, avg_delay), avg_delay, size=n)) +
+  coord_flip()
 ```
 
-Here we looked at those destinations with negative average delays. According to our size scale, the frequency of flights to these airports is more than an order of magnitude lower than in the previous plot. Two airports stand out in terms of average delay, 10165 Adak Island, Alaska and 10754 Barrow, Alaska. 
 ```{r destination zero delay}
 df_n %>% filter(avg_delay < 1 & avg_delay > -1) %>% ggplot() +
-  geom_point(aes(reorder(dest, avg_delay), avg_delay, size=n, fill=avg_delay), shape=21, alpha=.7) +
-  coord_flip() + scale_fill_viridis_c()
+  geom_point(aes(reorder(dest, avg_delay), avg_delay, size=n)) +
+  coord_flip()
 ```
 
-Among those airports with average delays within one minute of zero, the number of flights also tends to be small, no more than 3 000.
 ```{r destination high frequency}
-df_n %>% filter(avg_delay > 10) %>% ggplot() +
-  geom_point(aes(reorder(dest, avg_delay), avg_delay, size=n, fill=avg_delay), shape=21, alpha=.7) +
-  coord_flip() + scale_fill_viridis_c()
+df_n %>% filter(n > 25000) %>% ggplot() +
+  geom_point(aes(reorder(dest, avg_delay), avg_delay, size=n)) +
+  coord_flip()
 ```
 
-When we filter to those airports with average delays greater than ten minutes, airport 11618 Newark stand out as by far the most popular destination in this bracket. As with the negative delay visualization, there are a small number of outliers in terms of average delay:  
-* 13388 Mammoth Lakes, California  
-* 15295 Toledo, OH  
-* 13964 North Bend/Coos Bay, Oregon  
-* 10372 Aspen, Colorado  
-Mammoth Lakes and Aspen are both ski resort towns so it might be interesting to look at the average delays in the summer to see if there is a reversion to the mean during warmer months. 
 
-### Destination State
-
-PLOTS SHOWING RELATIONSHIP BETWEEN ARR DELAY, DEP DELAY AND DESTINATION STATE
 
 # Executive summary (Presentaion-style)
 
@@ -314,7 +374,19 @@ Starting in October, we do not see a clear pattern to delays. Tuesdays and Wedne
 [__Here__](https://bl.ocks.org/ecboxer/221d818a4b9fad4feb0ab14e7ca704a1) is a visualization of the average departure delay grouped by day of the week and hour of departure. It was constructed with the same VSUP scale as the daily departure delay visualization. Again, hovering over a tile shows the precise departure delay.  
 There are two patterns here: the distinction between weekdays and weekends, and an increase in delay length as a given day progresses. Weekends have a longer period of dark-blue than weekdays (corresponding to delays in the range of 3-9 minutes), and even in the hour before midnight do not reach the same magnitude of delay as do weekdays.  
 Across all days, until 9am average delays are small or negative. Afterwards there is a gradual increase in delays until we see an average delay length of 38 minutes in flights departing before midnight on Mondays.  
-Note: the choice was made to start the x-axis at 4am since at all previous times the standard mean errors were at least 0.1875 and their values were thus suppressed by our scale. Also, as mentioned in the Filtering section of our Analysis of Data Quality, our method of calculating delay led us to exclude some flights departing around midnight.
+Note: the choice was made to start the x-axis at 4am since at all previous times the standard mean errors were at least 0.1875 and their values were thus suppressed by our scale.
+
+## Arrival and Departure Delays
+```{r Graph 6}
+ggplot(df, aes(dep_delay, arr_delay)) +
+  geom_hex(bins = 50) + 
+  scale_fill_gradientn(colours = viridis(5, direction = 1)) +
+  xlab('Departure Delay in Minutes') + 
+  ylab('Arrival Delay in Minutes') +
+  guides(fill=guide_legend(title="Frequency"))
+
+```
+It appears that there's generally a linear relationship between the two variables where the higher the departure delay, the higher the arrival delay. There are some exceptions to this, and it's important to note that a big number of flights have a significantly high arrival delay despite having almost no departure delay. We hypothesize that this occurs when the destination landing strip is too busy, meaning the pilot is unable to make a landing at the scheduled time. Is this more common for certain airlines or certain airports?
 
 # Interactive component
 
