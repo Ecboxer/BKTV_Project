@@ -378,6 +378,7 @@ Note: the choice was made to start the x-axis at 4am since at all previous times
 
 ## Arrival and Departure Delays
 ```{r Graph 6}
+options(scipen=1000)
 ggplot(df, aes(dep_delay, arr_delay)) +
   geom_hex(bins = 50) + 
   scale_fill_gradientn(colours = viridis(5, direction = 1)) +
