@@ -18,6 +18,7 @@ knitr::opts_chunk$set(echo = TRUE,
 library(tidyverse)
 library(lubridate)
 library(viridis)
+library(choroplethr)
 theme_set(theme_bw())
 ```
 # Outline
@@ -311,6 +312,113 @@ PLOTS SHOWING RELATIONSHIP BETWEEN ARR DELAY, DEP DELAY AND DESTINATION AIRPORT
 
 ### Destination State
 
+```{r destination state arrival time}
+# data frame for the cleveland plot
+df$diff <- df$dep_delay - df$arr_delay
+flight <- df
+flight$dest_state <- factor(flight$dest_state)
+region_code <- c("1", "2", "3", "4", "5", "11", "12", "13", "14", "15", "16", "21", "22", "23", "31", "33", "34", "35", "36", "37", "38", "39", "41", "42", "43", "44", "45", "51", "52", "53", "54", "61", "62", "63", "64", "65", "66", "67", "71", "72", "73", "74", "81", "82", "83", "84", "85", "86", "87", "88", "91", "92", "93", "31")
+region_name <- c("Alaska", "Hawaii", "Puerto Rico", "U.S. Virgin Islands", "U.S. Pacific Trust Territories and Possessions", "Connecticut", "Maine", "Massachusetts", "New Hampshire", "Rhode Island", "Vermont", "New Jersey", "New York", "Pennsylvania", "Delware", "Florida", "Georgia", "Maryland", "North Carolina", "South Carolina", "Virginia", "West Virginia", "Illinois", "Indiana", "Michigan", "Ohio", "Wisconsin", "Alabama", "Kentucky", "Mississippi", "Tennessee", "Iowa", "Kansas", "Minnesota", "Missouri", "Nebraska", "North Dakota", "South Dakota", "Arkansas", "Louisiana", "Oklahoma", "Texas", "Arizona", "Colorado", "Idaho", "Montana", "Nevada", "New Mexico", "Utah", "Wyoming", "California", "Oregon", "Washington", "Delaware")
+flight$dest_state <- factor(flight$dest_state, region_code, region_name)
+
+# tidy data for clevelad plot
+flight_state <- flight %>%
+  group_by(dest_state) %>%
+  dplyr::summarize(sum_n = n(), sum_arr = sum(arr_delay), sum_dep = sum(dep_delay), sum_diff = sum(diff)) %>%
+  mutate(mean_arr = sum_arr/sum_n, mean_dep = sum_dep/sum_n, mean_diff = sum_diff/sum_n)
+
+# cleveland plot of arrival time and depature time
+flight_state$dest_state <- reorder(flight_state$dest_state, flight_state$mean_arr)
+ggplot(flight_state) +
+  geom_point(aes(mean_arr, dest_state, color = '#774184'), size = 3) +
+  geom_point(aes(mean_dep, dest_state, color='#4E8441'), size = 3) +
+  labs(title = "Delay Time of Flights over States", x = "Mean Delay in Mintutes", y = "", color = '') +
+  theme(legend.position = 'bottom') +
+  scale_color_hue(labels = c('Arrival Delay', 'Departure Delay'))
+
+# tidy data for map
+flight_state2 <- df %>%
+  group_by(dest_state) %>%
+  dplyr::summarize(sum_n = n(), sum_arr = sum(arr_delay), sum_diff = sum(diff)) %>%
+  mutate(mean_arr = sum_arr/sum_n, mean_diff = sum_diff/sum_n)
+
+# state map of arrival time
+flight_state_map <- subset(flight_state2, select = c('dest_state', 'mean_arr'))
+names(flight_state_map)[1] <- paste('region')
+names(flight_state_map)[2] <- paste('value')
+region_code <- c("1", "2", "3", "4", "5", 
+                 "11", "12", "13", "14", "15", "16", 
+                 "21", "22", "23", 
+                 "33", "34", "35", "36", "37", "38", "39", 
+                 "41", "42", "43", "44", "45", 
+                 "51", "52", "53", "54", 
+                 "61", "62", "63", "64", "65", "66", "67", 
+                 "71", "72", "73", "74", 
+                 "81", "82", "83", "84", "85", "86", "87", "88", 
+                 "91", "92", "93")
+region_name <- c("alaska", "hawaii", "puerto rico", "us virgin islands", "us pacific trust territories and possessions", 
+                 "connecticut", "maine", "massachusetts", "new hampshire", "rhode island", "vermont",
+                 "new jersey", "new york", "pennsylvania", 
+                  "florida", "georgia", "maryland", "north carolina", "south carolina", "virginia", "west virginia",
+                 "illinois", "indiana", "michigan", "ohio", "wisconsin", 
+                 "alabama", "kentucky", "mississippi", "tennessee", 
+                 "iowa", "kansas", "minnesota", "missouri", "nebraska", "north dakota", "south dakota", 
+                 "arkansas", "louisiana", "oklahoma", "texas", 
+                 "arizona", "colorado", "idaho", "montana", "nevada", "new mexico", "utah", "wyoming", 
+                 "california", "oregon", "washington")
+region_code2 <- "31"
+region_name2 <- "delaware"
+flight_state_map$region[flight_state_map$region == region_code] <- region_name
+flight_state_map$region[flight_state_map$region == region_code2] <- region_name2
+state_choropleth(flight_state_map,
+                 title = "Arrival Delay of Flights in the fourth quarter of the year 2017",
+                 legend = 'Mean Arrival Delay in Minutes')
+```
+
+```{r destination state delay time difference}
+# cleveland plot of time difference
+flight_state$dest_state <- reorder(flight_state$dest_state, flight_state$mean_diff)
+ggplot(flight_state) +
+  geom_point(aes(mean_diff, dest_state), color = '#774184', size = 3) +
+  labs(title = "Mean Difference between Depature and Arrival Delay over States", x = "Mean Difference in Mintutes", y = "", color = '')
+
+# state map of time difference
+diff_map <- subset(flight_state2, select = c('dest_state', 'mean_diff'))
+names(diff_map)[1] <- paste('region')
+names(diff_map)[2] <- paste('value')
+region_code <- c("1", "2", "3", "4", "5", 
+                 "11", "12", "13", "14", "15", "16", 
+                 "21", "22", "23", 
+                 "33", "34", "35", "36", "37", "38", "39", 
+                 "41", "42", "43", "44", "45", 
+                 "51", "52", "53", "54", 
+                 "61", "62", "63", "64", "65", "66", "67", 
+                 "71", "72", "73", "74", 
+                 "81", "82", "83", "84", "85", "86", "87", "88", 
+                 "91", "92", "93")
+region_name <- c("alaska", "hawaii", "puerto rico", "us virgin islands", "us pacific trust territories and possessions", 
+                 "connecticut", "maine", "massachusetts", "new hampshire", "rhode island", "vermont",
+                 "new jersey", "new york", "pennsylvania", 
+                  "florida", "georgia", "maryland", "north carolina", "south carolina", "virginia", "west virginia",
+                 "illinois", "indiana", "michigan", "ohio", "wisconsin", 
+                 "alabama", "kentucky", "mississippi", "tennessee", 
+                 "iowa", "kansas", "minnesota", "missouri", "nebraska", "north dakota", "south dakota", 
+                 "arkansas", "louisiana", "oklahoma", "texas", 
+                 "arizona", "colorado", "idaho", "montana", "nevada", "new mexico", "utah", "wyoming", 
+                 "california", "oregon", "washington")
+region_code2 <- "31"
+region_name2 <- "delaware"
+diff_map$region[diff_map$region == region_code] <- region_name
+diff_map$region[diff_map$region == region_code2] <- region_name2
+state_choropleth(diff_map,
+                 title = "Delay Time Difference of Flights in the fourth quarter of the year 2017",
+                 legend = 'Delay Time Difference in Minutes')
+```
+
+
+
+
+
 PLOTS SHOWING RELATIONSHIP BETWEEN ARR DELAY, DEP DELAY AND DESTINATION STATE
 ### Destination Airport
 
@@ -378,7 +486,6 @@ Note: the choice was made to start the x-axis at 4am since at all previous times
 
 ## Arrival and Departure Delays
 ```{r Graph 6}
-options(scipen=1000)
 ggplot(df, aes(dep_delay, arr_delay)) +
   geom_hex(bins = 50) + 
   scale_fill_gradientn(colours = viridis(5, direction = 1)) +
