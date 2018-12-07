@@ -267,30 +267,30 @@ df_n <- df %>% group_by(dest) %>%
 With the dataframe in hand, first we will look at those destinations with the most flights, more than 20 000 over the period.
 ```{r destination cleveland}
 df_n %>% filter(n > 20000) %>% ggplot() +
-  geom_point(aes(reorder(dest, avg_delay), avg_delay, size=n, color=avg_delay)) +
-  coord_flip() + scale_color_viridis_c()
+  geom_point(aes(reorder(dest, avg_delay), avg_delay, size=n, fill=avg_delay), shape=21, alpha=.7) +
+  coord_flip() + scale_fill_viridis_c()
 ```
 
 11618 Newark Liberty International stands out as having the highest average delay of the lot. 14771 San Francisco International has a smaller average delay than Newark, but it stands out among those airports with more than 40 000 flights. Apart from San Francisco these airports have average delays in the neightborhood of five minutes. It is also noticeable that none of the most frequent destinations have a negative average delay.
 
 ```{r destination negative delay}
 df_n %>% filter(avg_delay < 0) %>% ggplot() +
-  geom_point(aes(reorder(dest, avg_delay), avg_delay, size=n, color=avg_delay)) +
-  coord_flip()
+  geom_point(aes(reorder(dest, avg_delay), avg_delay, size=n, fill=avg_delay), shape=21, alpha=.7) +
+  coord_flip() + scale_fill_viridis_c()
 ```
 
 Here we looked at those destinations with negative average delays. According to our size scale, the frequency of flights to these airports is more than an order of magnitude lower than in the previous plot. Two airports stand out in terms of average delay, 10165 Adak Island, Alaska and 10754 Barrow, Alaska. 
 ```{r destination zero delay}
 df_n %>% filter(avg_delay < 1 & avg_delay > -1) %>% ggplot() +
-  geom_point(aes(reorder(dest, avg_delay), avg_delay, size=n, color=avg_delay)) +
-  coord_flip()
+  geom_point(aes(reorder(dest, avg_delay), avg_delay, size=n, fill=avg_delay), shape=21, alpha=.7) +
+  coord_flip() + scale_fill_viridis_c()
 ```
 
 Among those airports with average delays within one minute of zero, the number of flights also tends to be small, no more than 3 000.
 ```{r destination high frequency}
 df_n %>% filter(avg_delay > 10) %>% ggplot() +
-  geom_point(aes(reorder(dest, avg_delay), avg_delay, size=n, color=avg_delay)) +
-  coord_flip()
+  geom_point(aes(reorder(dest, avg_delay), avg_delay, size=n, fill=avg_delay), shape=21, alpha=.7) +
+  coord_flip() + scale_fill_viridis_c()
 ```
 
 When we filter to those airports with average delays greater than ten minutes, airport 11618 Newark stand out as by far the most popular destination in this bracket. As with the negative delay visualization, there are a small number of outliers in terms of average delay:  
