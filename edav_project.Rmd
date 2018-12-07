@@ -17,12 +17,23 @@ knitr::opts_chunk$set(echo = TRUE,
 # import libraries
 library(tidyverse)
 library(lubridate)
+library(viridis)
 scale_colour_continuous <- scale_colour_viridis_c
 theme_set(theme_bw())
 ```
 # Outline
 
 # Introduction
+
+In today’s day and age where the consumer has zero tolerance for inefficiencies, one can’t help but wonder how flight delays are still prevalent. How can multimillion dollar airlines fail to anticipate these at a consistent basis? It is certainly to the benefit of all parties involved that they don’t occur, so how come one in three flights is delayed? As frequent flyers and curious data scientists, we set out to explore the natural phenomenon that is flight delays and its causes. Can we find a common denominator amongst delays?
+
+The team consists of four members where each analyzed a specific variable’s impact on flight delay:
+- Eric Boxer: time, date, day of the week, destination.
+- Kai Kang: destination airport, destination states.
+- Ioannis Tzemos: distance ................
+- Costas Vafeades: day of the week, makeup delay, arrival delay.
+
+On top of the contributions listed above, every member took it upon himself to further add value. A visualization aficionado, Eric produced half of the interactive plots found in our main analysis and maintained our project repository. Kai, a teamwork veteran, kept notes and led the discussions in our weekly meetings. Our efficiency expert Ioannis produced the other half of the interactive plots and optimized our pipeline’s run-time. Finally, as meticulous as can be, Costas provided structure by producing agendas and schedules for the group and set up the data pipeline with Eric.
 
 # Description of data
 
@@ -129,6 +140,129 @@ df$dest %>% unique() %>% length() #How many airports in the data?
 ```
 
 To begin exploring the data on destination, with 300 unique values, we first construct a dataframe grouped by destination and with features for the number of flights, the total departure delay and the mean departure delay.
+
+Our data exploration starts by first looking at variables that might help explain the delay:
+- Date
+- Day of the Week
+- Time of Departure
+- Distance
+- Destination Airport
+- Carrier
+Naturally, we then proceed to examine whether delays can be ammended for by examining its relationship with the following variables:
+- Arrival Delay
+- Destination Airport
+- Destination State
+
+
+### Date
+
+DATE PLOTS
+
+### Day of the Week
+
+How are flights distributed throughout a week? Which day is most popular for travelling?
+```{r}
+num_flights <- df %>% group_by(weekday) %>% summarize(count = n())
+num_flights$perc <- num_flights$count / sum(num_flights$count)
+num_flights$weekday <- factor(num_flights$weekday, levels = c('Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'))
+
+ggplot(num_flights, aes(weekday, perc)) +
+  # plots
+  geom_col(fill = '#774184' ) +
+  # labels
+  ggtitle('Percentage of Flights on Each Day') +
+  xlab("Day of the Week") +
+  ylab("Percentage of Flights")
+
+```
+
+Flights seem to be relatively evenly distributed over all days except Saturdays. This somewhat makes sense, as usually travellers with flights on Saturdays are more likely to be for vacational purposes - and they are more likely to depart on Friday for their destination. How do delays relate to days of the week?
+
+```{r}
+ggplot(df, aes(x=weekday, y=dep_delay)) + geom_boxplot(varwidth=TRUE, fill = '#774184') +
+  ggtitle('Distribution of Delay on Each Day') +
+  xlab("") +
+  ylab("Delay in Minutes")
+```
+
+The size of our dataset makes it hard for us to visualize the distribution effectively and identify any patterns. One way of going about this is taking the log of our y-axis. Of course, logging negative values would result in erroneous results so we'll focus on positive delays for now. 
+
+```{r}
+ggplot(subset(df, df$dep_delay >0), aes(x=weekday, y=log(dep_delay))) + geom_boxplot(varwidth=TRUE, fill = '#774184') +
+  ggtitle('Distribution of Positive Delay on Each Day') +
+  xlab("") +
+  ylab("log(Delay in Minutes)")
+```
+
+Evidently, delays are very similar over each day so there's no significant observation to be made. ??? How do negative delays relate to this?
+
+```{r}
+df$pos_delay <- ifelse(df$dep_delay > 0, 'Positive', 'Negative')
+
+ggplot(df, aes(x=weekday, y=log(abs(dep_delay)))) + geom_boxplot(aes(fill=factor(pos_delay)), varwidth=TRUE) +
+  scale_y_continuous(name = 'log(Delay in Minutes)') + xlab('Day of the Week') + guides(fill=guide_legend(title="Delay")) +
+  scale_fill_manual(values=c('#4E8441', '#774184'))
+```
+It appears that flights are more likely to depart earlier rather than later, but positive delays have greater spread. Early departures also don't seem to vary by day. 
+
+### Time of Departure
+
+TIME OF DEP PLOTS
+
+### Distance
+
+DISTANCE PLOTS
+
+### Destination Airport
+```{r}
+top_airports <- df %>% group_by(dest) %>% summarize(num_flights = n())
+top_airports <- top_airports[order(-top_airports$num_flights), ]
+head(top_airports, 10)
+```
+
+We can also visualize the distribution of departure delay in our top airports in order to see if flights are more likely to be delayed when headed to more popular destinations.
+
+```{r}
+ggplot(subset(df, df$dest %in% head(top_airports$dest, 5)), aes(x=factor(dest), y=log(dep_delay))) + geom_boxplot(varwidth=TRUE, fill = '#774184') +
+  ggtitle('Distribution of Positive Delay in the Top 5 Airports') +
+  xlab("") +
+  ylab("log(Delay in Minutes)")
+```
+
+### Carrier
+
+CARRIER PLOTS
+
+SOME DISCUSSION RE: CAUSAL VARIABLES AND HOW THEY AFFECT THE DEPARTURE DELAY. 
+
+### Arrival Delay
+
+How do departure delay and arrival delay relate to each other? Is it possible that the pilot makes up for the delay with a shorter flight, or is it a sign that the flight is going to take even longer? 
+
+```{r Graph 6}
+ggplot(df, aes(dep_delay, arr_delay)) +
+  geom_hex(bins = 50) + 
+  scale_fill_gradientn(colours = viridis(5, direction = 1)) +
+  xlab('Departure Delay in Minutes') + 
+  ylab('Arrival Delay in Minutes') +
+  guides(fill=guide_legend(title="Frequency"))
+```
+
+The two variables appear to have a roughly linear relationship, especially at higher values. There are some notable exceptions to this, where a big number of flights experience a high arrival delay even though they had zero departure delay. This can be explained by flights that had trouble landing because the destination airport strips were too busy. 
+
+We can construct a variable called diff_delay that indicates the difference between departure delay and arrival delay. This will allow us to examine whether a departure delay is likely to be ammended for or not. 
+```{r}
+df$diff_delay <- df$dep_delay - df$arr_delay
+```
+
+### Destination Airport
+
+PLOTS SHOWING RELATIONSHIP BETWEEN ARR DELAY, DEP DELAY AND DESTINATION AIRPORT
+
+### Destination State
+
+PLOTS SHOWING RELATIONSHIP BETWEEN ARR DELAY, DEP DELAY AND DESTINATION STATE
+
 ```{r destination frequency}
 df_n <- df %>% group_by(dest) %>% 
   summarise(n = n(),
@@ -171,7 +305,7 @@ When we filter to those airports with average delays greater than ten minutes, a
 * 15295 Toledo, OH  
 * 13964 North Bend/Coos Bay, Oregon  
 * 10372 Aspen, Colorado  
-Mammoth Lakes and Aspen are both ski resort towns so it might be interesting to look at the average delays in the summer to see if there is a reversion to the mean during warmer months.  
+Mammoth Lakes and Aspen are both ski resort towns so it might be interesting to look at the average delays in the summer to see if there is a reversion to the mean during warmer months. 
 
 # Executive summary (Presentaion-style)
 
