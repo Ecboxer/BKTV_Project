@@ -137,18 +137,17 @@ df <- df %>%
 # Main analysis (Exploratory Data Analysis)
 
 Our data exploration starts by first looking at variables that might help explain the delay:
-- Date
-- Day of the Week
-- Time of Departure
-- Distance
-- Destination Airport
-- Carrier
+Yiannis'/- Date
+/- Day of the Week
+/- Time of Departure
+Yiannis State and 3 scatters/- Distance
+/- Destination Airport
+/- Carrier
 Naturally, we then proceed to examine whether delays can be ammended for by examining its relationship with the following variables:
-- Arrival Delay
-- Airline
-- Destination Airport
-- Destination State
-
+Kai scatter/- Arrival Delay
+/- Airline
+/- Destination Airport
+/- Destination State
 
 ### Date
 
