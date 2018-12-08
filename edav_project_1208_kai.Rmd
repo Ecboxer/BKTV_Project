@@ -19,6 +19,7 @@ library(tidyverse)
 library(lubridate)
 library(viridis)
 library(choroplethr)
+library(choroplethrMaps)
 theme_set(theme_bw())
 ```
 # Outline
@@ -424,6 +425,7 @@ PLOTS SHOWING RELATIONSHIP BETWEEN ARR DELAY, DEP DELAY AND DESTINATION AIRPORT
 ### Destination State
 
 ```{r destination state arrival time}
+library(choroplethr)
 # data frame for the cleveland plot
 df$diff <- df$dep_delay - df$arr_delay
 flight <- df
