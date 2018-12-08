@@ -19,9 +19,9 @@ library(tidyverse)
 library(lubridate)
 library(viridis)
 library(choroplethr)
+library(choroplethrMaps)
 theme_set(theme_bw())
 ```
-# Outline
 
 # Introduction
 
@@ -172,7 +172,7 @@ Kai scatter/- Arrival Delay
 
 We initiate our Exploratory Data Analysis by examining the Delays in the Departure time for every day of the month. The following scatterplot graph helps us determine whether a relationship can be infered?
 
-```{r}
+```{r dates}
 monthly_data <- mutate(df, month = format(as.Date(df$date,format="%Y-%m-%d"), "%m"), 
                        day = format(as.Date(df$date,format="%Y-%m-%d"), "%d"))
 monthly_data <- select(monthly_data, date, dep_delay, month, day)
@@ -200,7 +200,7 @@ Clearly, we can observe that during the Christmas Holidays the Departure Delays 
 ### Day of the Week
 
 How are flights distributed throughout a week? Which day is most popular for travelling?
-```{r}
+```{r day of the week}
 num_flights <- df %>% group_by(weekday) %>% summarize(count = n())
 num_flights$perc <- num_flights$count / sum(num_flights$count)
 num_flights$weekday <- factor(num_flights$weekday, levels = c('Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'))
@@ -217,7 +217,7 @@ ggplot(num_flights, aes(weekday, perc)) +
 
 Flights seem to be relatively evenly distributed over all days except Saturdays. This somewhat makes sense, as usually travellers with flights on Saturdays are more likely to be for vacational purposes - and they are more likely to depart on Friday for their destination. How do delays relate to days of the week?
 
-```{r}
+```{r day of the week boxplot}
 ggplot(df, aes(x=weekday, y=dep_delay)) + geom_boxplot(varwidth=TRUE, fill = '#774184') +
   ggtitle('Distribution of Delay on Each Day') +
   xlab("") +
@@ -226,7 +226,7 @@ ggplot(df, aes(x=weekday, y=dep_delay)) + geom_boxplot(varwidth=TRUE, fill = '#7
 
 The size of our dataset makes it hard for us to visualize the distribution effectively and identify any patterns. One way of going about this is taking the log of our y-axis. Of course, logging negative values would result in erroneous results so we'll focus on positive delays for now. 
 
-```{r}
+```{r day of the week log}
 ggplot(subset(df, df$dep_delay >0), aes(x=weekday, y=log(dep_delay))) + geom_boxplot(varwidth=TRUE, fill = '#774184') +
   ggtitle('Distribution of Positive Delay on Each Day') +
   xlab("") +
@@ -235,7 +235,7 @@ ggplot(subset(df, df$dep_delay >0), aes(x=weekday, y=log(dep_delay))) + geom_box
 
 Evidently, delays are very similar over each day so there's no significant observation to be made. ??? How do negative delays relate to this?
 
-```{r}
+```{r day of the week split}
 df$pos_delay <- ifelse(df$dep_delay > 0, 'Positive', 'Negative')
 
 ggplot(df, aes(x=weekday, y=log(abs(dep_delay)))) + geom_boxplot(aes(fill=factor(pos_delay)), varwidth=TRUE) +
@@ -252,7 +252,7 @@ TIME OF DEP PLOTS
 
 Does distance have any specific characteristics and how does the Distance relate to the Delays in Departure?
 
-```{r}
+```{r distance}
 ggplot(df_backup, aes(x = dep_delay, y = distance)) +
     geom_point(alpha = .3, color = "#441152", stroke = 0) +
     xlab("Delays in Departure (Minutes)") +
@@ -268,7 +268,7 @@ Plotting the scatterplot of the Distance in correlation with the Delays in the D
 
 To further investigate the latter claim, we produce the following two graphs.
 
-```{r}
+```{r distance under 12 hrs}
 ggplot(df_backup, aes(x = dep_delay, y = distance)) +
     geom_point(alpha = .3, color = "#4E8441", stroke = 0) +
     xlim(-720,720) +
@@ -278,7 +278,7 @@ ggplot(df_backup, aes(x = dep_delay, y = distance)) +
           subtitle = "Limited in 12 hours delays - early departures") +
     labs(caption = "Source: Final Project Datatset")
 ```
-```{r}
+```{r distance under 3 hrs}
 ggplot(df_backup, aes(x = dep_delay, y = distance)) +
     geom_point(alpha = .3, color = "#441152", stroke = 0) +
     xlim(-180,180) +
@@ -293,7 +293,7 @@ Now, we can clearly bound the times of the departure delays that we are going to
 
 Upon further investigation of the distance variable, we produced a plot of the unique values of the distances traveled to reach each State destination.
 
-```{r}
+```{r distance states}
 states_recode <- c("1" = "AK", "2" = "HI", "3" = "PR", "4" = "VI", "5" = "TT", "11" = "CT", "12" = "ME", "13" = "MA", "14" = "NH", "15" = "RI", "16" = "VT", "21" = "NJ", "22" = "NY", "23" = "PA", "33" = "FL", "34" = "GA", "35" = "MD", "36" = "NC", "37" = "SC", "38" = "VA", "39" = "WV", "41" = "IL", "42" = "IN", "43" = "MI", "44" = "OH", "45" = "WI", "51" = "AL", "52" = "KY", "53" = "MS", "54" = "TN", "61" = "IA", "62" = "KS", "63" = "MN", "64" = "MO", "65" = "NE", "66" = "ND", "67" = "SD", "71" = "AR", "72" = "LA", "73" = "OK", "74" = "TX", "81" = "AZ", "82" = "CO", "83" = "ID", "84" = "MT", "85" = "NV", "86" = "NM", "87" = "UT", "88" = "WY", "91" = "CA", "92" = "OR", "93" = "WA")
 
 distance_state_data <- df %>% select( dest_state, distance ) %>% group_by( dest_state, distance ) %>% summarize( count = n() ) 
@@ -311,7 +311,7 @@ ggplot(distance_state_data, aes(x = state, y = distance)) +
 
 Additionally, we create a graph of the unique distances that each US carrier claims to have covered. 
 
-```{r}
+```{r distance carrier}
 distance_carrier_data <- df %>% select( carrier, distance ) %>% group_by( carrier, distance ) %>% summarize( count = n() ) 
 
 ggplot(distance_carrier_data, aes(x = carrier, y = distance)) +
@@ -325,14 +325,14 @@ ggplot(distance_carrier_data, aes(x = carrier, y = distance)) +
 
 Based on the two graphs presented, we were able to observe that the values of the distance variable are a lot more discrete than they were suppose to. Logically speaking, we should have a great variety of values since it is extremely rare for two planes to cover the exact same distance going back or forth to the same destination-origin point. By going back to the source of our data, we were able to conclude that the distance provided by our dataset is an actual approximation of the shortest distance between any two points on the surface of a sphere. Therefore, any two flights with the same start and end points have the same distances. This can be easily verified from the table below.
 
-```{r}
+```{r distance table}
 distance_table <- df %>% select(origin, dest, dest_state, distance) %>% group_by(origin, dest)
 head(distance_table, 10)
 ```
 
  
 ### Destination Airport
-```{r}
+```{r airport df}
 top_airports <- df %>% group_by(dest) %>% summarize(num_flights = n())
 top_airports <- top_airports[order(-top_airports$num_flights), ]
 top_airports <- head(top_airports, 5)
@@ -347,7 +347,7 @@ head(subset(df, df$pop_dest != 0), 5)
 
 We can also visualize the distribution of departure delay in our top airports in order to see if flights are more likely to be delayed when headed to more popular destinations.
 
-```{r}
+```{r airport boxplots}
 ggplot(subset(df, df$pop_dest != 0), aes(x=factor(dest), y=log(dep_delay))) + geom_boxplot(varwidth=TRUE, fill = '#774184') +
   ggtitle('Distribution of Positive Delay in the busiest and least busiest Airports') +
   facet_grid(. ~ pop_dest) +
@@ -360,7 +360,7 @@ The delay distribution varies very little between the top 5 airports. The delay 
 
 ### Carrier
 
-```{r}
+```{r carrier data}
 top_carriers <- df %>% group_by(carrier) %>% summarize(num_flights = n())
 top_carriers <- top_carriers[order(-top_carriers$num_flights), ]
 top_carriers <- head(top_carriers, 5)
@@ -373,7 +373,7 @@ df$pop_carrier <- ifelse(df$carrier %in% last_carriers$carrier, "Unpopular", df$
 head(subset(df, df$pop_carrier != 0), 5)
 ```
 
-```{r}
+```{r carrier boxplots}
 ggplot(subset(df, df$pop_carrier != 0), aes(x=factor(carrier), y=log(dep_delay))) + geom_boxplot(varwidth=TRUE, fill = '#774184') +
   ggtitle('Distribution of Positive Delay in the busiest and least busiest Airlines') +
   facet_grid(. ~ pop_carrier) +
@@ -389,7 +389,7 @@ SOME DISCUSSION RE: CAUSAL VARIABLES AND HOW THEY AFFECT THE DEPARTURE DELAY.
 
 How do departure delay and arrival delay relate to each other? Is it possible that the pilot makes up for the delay with a shorter flight, or is it a sign that the flight is going to take even longer? 
 
-```{r Graph 6}
+```{r diff hexbin}
 ggplot(df, aes(dep_delay, arr_delay)) +
   geom_hex(bins = 50) + 
   scale_fill_gradientn(colours = viridis(5, direction = 1)) +
@@ -401,13 +401,13 @@ ggplot(df, aes(dep_delay, arr_delay)) +
 The two variables appear to have a roughly linear relationship, especially at higher values. There are some notable exceptions to this, where a big number of flights experience a high arrival delay even though they had zero departure delay. This can be explained by flights that had trouble landing because the destination airport strips were too busy. 
 
 We can construct a variable called diff_delay that indicates the difference between departure delay and arrival delay. This will allow us to examine whether a departure delay is likely to be ammended for or not. 
-```{r}
+```{r construct diff_delay}
 df$diff_delay <- df$dep_delay - df$arr_delay
 ```
 
 ### Airline
 
-```{r}
+```{r airpline boxplots}
 df$pos_makeup <- ifelse(df$diff_delay >= 0, "Positive", "Negative")
 df$pos_makeup <- factor(df$pos_makeup)
 
@@ -420,7 +420,7 @@ ggplot(subset(df, df$pop_carrier != 0 & df$pos_makeup == 'Positive'), aes(x=fact
 
 
 ### Destination Airport
-```{r}
+```{r airport popularity boxplots}
 ggplot(subset(df, df$pop_dest != 0 & df$pos_makeup == 'Positive'), aes(x=factor(dest), y=log(dep_delay))) + geom_boxplot(varwidth=TRUE, fill = '#774184') +
   ggtitle('Distribution of Makeup Delay in the busiest and least busy Airports') +
   facet_grid(. ~ pop_dest) +
@@ -497,6 +497,8 @@ state_choropleth(flight_state_map,
                  legend = 'Mean Arrival Delay in Minutes')
 ```
 
+The interesting pattern between flights' depature time and arrival time enables us to explore the reasons behind it.  The first question we asked was whether the distance of traveling influence on the flights' time performance. Though there is no real travling distance for each flight, the destination state of each flight can roughly represent their travling distance. We found that neither the depature delay or the arrival delay associate with the distance of traveling, represented by the locations of states. For exmaple, both flights flew to New Jersey and Puerto Rico had the high average deapture dealy and arrival dealy, but New Jersey is much closer to New York City than Puerto Rico. However, we surprisingly found that the average depature time is higher than the average arrival time, whatever the traveling distance is far from or close to New York City. This implies that the piolets usually make up time during the flight driving when the flights leave later than then expected depature time. Even when the flights leave earlier than the expected depture time in Alaska, the piolts still make up time during their flight driving.
+
 ```{r destination state delay time difference}
 # cleveland plot of time difference
 flight_state$dest_state <- reorder(flight_state$dest_state, flight_state$mean_diff)
@@ -537,9 +539,7 @@ state_choropleth(diff_map,
                  legend = 'Delay Time Difference in Minutes')
 ```
 
-
-
-
+Since we found that  the pilots usually make up time during their drivings, we next asked the question that the flights to which states had the most make up time. To our surprise, the make up time does not relate to the distance of traveling, which is represented by the states. For instance, the flights flew from New York City to Maryland, Minnesota, New York, South Carolina and Arizona had similar make up time, but the distance from New York City are much more closer to Maryland and New York to South Carolina, Minnesota and Arizona. Several states showed interesting make up time, U.S. Pacfic Trust Territories and Possessions with the highest and Hawaii and Alaska with the lowest, which need further exploration.
 
 PLOTS SHOWING RELATIONSHIP BETWEEN ARR DELAY, DEP DELAY AND DESTINATION STATE
 ### Destination Airport
@@ -607,14 +607,13 @@ Across all days, until 9am average delays are small or negative. Afterwards ther
 Note: the choice was made to start the x-axis at 4am since at all previous times the standard mean errors were at least 0.1875 and their values were thus suppressed by our scale.
 
 ## Arrival and Departure Delays
-```{r Graph 6}
+```{r presentation hexbin}
 ggplot(df, aes(dep_delay, arr_delay)) +
   geom_hex(bins = 50) + 
   scale_fill_gradientn(colours = viridis(5, direction = 1)) +
   xlab('Departure Delay in Minutes') + 
   ylab('Arrival Delay in Minutes') +
   guides(fill=guide_legend(title="Frequency"))
-
 ```
 It appears that there's generally a linear relationship between the two variables where the higher the departure delay, the higher the arrival delay. There are some exceptions to this, and it's important to note that a big number of flights have a significantly high arrival delay despite having almost no departure delay. We hypothesize that this occurs when the destination landing strip is too busy, meaning the pilot is unable to make a landing at the scheduled time. Is this more common for certain airlines or certain airports?
 
@@ -626,11 +625,8 @@ It appears that there's generally a linear relationship between the two variable
 
 [__Here__](https://bl.ocks.org/yannistze/f6679d566e5c1d8ceabab043535dfcac) is a chart of boxplots that show the distribution of the departure delays based on the US carrier that fulfills the flight. Taking into account the width of the boxplots, we can infer which carrier fulfills the most flights. Also, when Clicking upon the boxplot of the carrier that interests the viewer, he or she can see the distribution of the departure delays of that carrier, as well as the distribution of the early departed flights. As a result, the viewer can compare the airline carriers and choose according to his or her needs.  
 
-# Interactive component
-
 # Conclusion
 
 #### Future direction
 * Cancellations, ie does the presence of cancelled flights increase the delays for flights that did depart?
 * Other origin airports
-* Full year/several years
