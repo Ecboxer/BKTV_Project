@@ -277,7 +277,8 @@ ggplot(df_backup, aes(x = dep_delay, y = distance)) +
     ggtitle("Departure Delays in correlation with the travelled Distance",
           subtitle = "Limited in 12 hours delays - early departures") +
     labs(caption = "Source: Final Project Datatset")
-
+```
+```{r}
 ggplot(df_backup, aes(x = dep_delay, y = distance)) +
     geom_point(alpha = .3, color = "#441152", stroke = 0) +
     xlim(-180,180) +
@@ -287,6 +288,7 @@ ggplot(df_backup, aes(x = dep_delay, y = distance)) +
             subtitle = "Limited in 3 hours delays - early departures") +
     labs(caption = "Source: Final Project Datatset")
 ```
+
 Now, we can clearly bound the times of the departure delays that we are going to examine between a maximum of 12 hours delay and a maximum of 2 hours early departure. This follows from the fact that a 3 hour delay or early departure interval (latter graph) does not constitute a clear representation of the phenomenon that we are exploring. On the contrary, a 12 hours delay interval is more than enough to give us the full picture and when combined with the 2 hours early departure barrier allow us to have a clear picture of the situation at hand. 
 
 Upon further investigation of the distance variable, we produced a plot of the unique values of the distances traveled to reach each State destination.
@@ -295,13 +297,13 @@ Upon further investigation of the distance variable, we produced a plot of the u
 states_recode <- c("1" = "AK", "2" = "HI", "3" = "PR", "4" = "VI", "5" = "TT", "11" = "CT", "12" = "ME", "13" = "MA", "14" = "NH", "15" = "RI", "16" = "VT", "21" = "NJ", "22" = "NY", "23" = "PA", "33" = "FL", "34" = "GA", "35" = "MD", "36" = "NC", "37" = "SC", "38" = "VA", "39" = "WV", "41" = "IL", "42" = "IN", "43" = "MI", "44" = "OH", "45" = "WI", "51" = "AL", "52" = "KY", "53" = "MS", "54" = "TN", "61" = "IA", "62" = "KS", "63" = "MN", "64" = "MO", "65" = "NE", "66" = "ND", "67" = "SD", "71" = "AR", "72" = "LA", "73" = "OK", "74" = "TX", "81" = "AZ", "82" = "CO", "83" = "ID", "84" = "MT", "85" = "NV", "86" = "NM", "87" = "UT", "88" = "WY", "91" = "CA", "92" = "OR", "93" = "WA")
 
 distance_state_data <- df %>% select( dest_state, distance ) %>% group_by( dest_state, distance ) %>% summarize( count = n() ) 
-distance_state_data <- distance_state_data %>% mutate( state = states_recode[dest_state])
+distance_state_data <- distance_state_data %>% mutate( state = states_recode[as.character(dest_state)])
 
-ggplot(distance_state_data, aes(x = factor(state), y = distance)) +
+ggplot(distance_state_data, aes(x = state, y = distance)) +
     geom_point(alpha = .8, color = "#441152", stroke = 0) +
-    coord_flip() +
     xlab("Destination (State)") +
     ylab("Distance (Miles)") +
+    theme(axis.text.x = element_text(size = 5)) +
     ggtitle("Distance in correlation with the State Destination",
             subtitle = "Unique Distances traveled to reach corresponding State destination") +
     labs(caption = "Source: Final Project Datatset")
