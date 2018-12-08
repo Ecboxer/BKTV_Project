@@ -1,8 +1,8 @@
 ---
 title: "EDAV Project"
 output:
-  pdf_document: default
   html_document: default
+  pdf_document: default
 group: Costas, Ioannis, Eric, Kai
 ---
 
@@ -30,13 +30,30 @@ In today’s day and age where the consumer has zero tolerance for inefficiencie
 The team consists of four members where each analyzed a specific variable’s impact on flight delay:
 - Eric Boxer: time, date, day of the week, destination.
 - Kai Kang: destination airport, destination states.
-- Ioannis Tzemos: distance ................
+- Ioannis Tzemos: distance, day of the month, carrier 
 - Costas Vafeades: day of the week, makeup delay, carrier and destination popularity.
 
 On top of the contributions listed above, every member took it upon himself to further add value. A visualization aficionado, Eric produced half of the interactive plots found in our main analysis and maintained our project repository. Kai, a teamwork veteran, kept notes and led the discussions in our weekly meetings. Our efficiency expert Ioannis produced the other half of the interactive plots and optimized our pipeline’s run-time. Finally, as meticulous as can be, Costas provided structure by producing agendas and schedules for the group and set up the data pipeline with Eric.
 
 
 # Description of data
+
+Having chosen our topic, we steered our focus towards finding a dataset that can answer the above mentioned questions for us. As our source for data, we used the website of the [United States Department of Transportation](https://transtats.bts.gov/databases.asp?Mode_ID=1&Mode_Desc=Aviation&Subject_ID2=0). Of course, based on our goal, we interacted only with the portion of their collected data library that deals with the topic of Aviation.
+
+The Aviation Data Library, incorporates 26 different databases with data going back to one or even two decades. From the available databases, we used the one called “Airline On-Time Performance Data”. It stores, amongst other features, monthly data for scheduled and actual arrival or departure times of flights as reported by US certified air carriers. The “Reporting Carrier On-Time Performance (1987-present)” table, is the one that we drew our dataset from.
+
+In a nutshell, our data can be found:
+
+  * [United States Department of Transportation](https://transtats.bts.gov/databases.asp?Mode_ID=1&Mode_Desc=Aviation&Subject_ID2=0)
+    * Airline On-Time Performance Data
+      * Reporting Carrier On-Time Performance (1987-present)
+
+Given the plethora of available data, we had to implement an initial filtering before the dataset could be extracted. Based on the available parameters for compressed downloading that the website provides, we agreed upon the following conditions:
+* From a total of 111 different features, distributed across 12 groups each encapsulating features relevant to the topic of the group, we chose 19 of them. These features can be combined to produce an answer for our already introduced questions. 
+* Additionally, based on the fact that we wanted to explore the time delays in crucial periods within a year, we focused our data extraction on the last trimester of 2017 (October to December). During that time of year, there exist at least two major holidays (Thanksgiving and Christmas) when traveling is frequent and the delays can be clearly evaluated. Of course, we also included October in order to keep our conclusions unbiased and have a more clear representation of the situation concerning the delays. 
+* Finally, our dataset’s aim was to provide data for domestic flights out of New York, for any available airline company that fulfills such flights and to every possible destination in United States.
+
+Having extracted and downloaded a dataset of approximately 1.4 million observations, we were able to continue with the exploratory data analysis of our dataset.
 
 # Analysis of data quality
 ## Pipeline
@@ -131,6 +148,7 @@ df <- df %>%
 # Subset data with relevent dep_delay and arr_delay values
 df_sample <- df_sample %>%
   filter(arr_delay >= -120 & arr_delay <= 720 & dep_delay >= -120 & dep_delay <= 720)
+df_backup <- df
 df <- df %>%
   filter(arr_delay >= -120 & arr_delay <= 720 & dep_delay >= -120 & dep_delay <= 720)
 ```
@@ -150,9 +168,34 @@ Kai scatter/- Arrival Delay
 /- Destination Airport
 /- Destination State
 
-### Date
+### Day of the Month
 
-DATE PLOTS
+We initiate our Exploratory Data Analysis by examining the Delays in the Departure time for every day of the month. The following scatterplot graph helps us determine whether a relationship can be infered?
+
+```{r}
+monthly_data <- mutate(df, month = format(as.Date(df$date,format="%Y-%m-%d"), "%m"), 
+                       day = format(as.Date(df$date,format="%Y-%m-%d"), "%d"))
+monthly_data <- select(monthly_data, date, dep_delay, month, day)
+
+monthly_data$month[monthly_data$month == 10] <- "October" 
+monthly_data$month[monthly_data$month == 11] <- "November" 
+monthly_data$month[monthly_data$month == 12] <- "December" 
+monthly_data$month = factor(monthly_data$month, levels=c("October","November","December"))
+monthly_delay <- filter(monthly_data, df$dep_delay > 0)
+monthly_early <- filter(monthly_data, df$dep_delay <= 0)
+
+ggplot() + 
+  geom_point(data = monthly_delay, aes(y = dep_delay, x = day), alpha = .5, color = "#774184", stroke = 0) +
+  geom_point(data = monthly_early, aes(y = dep_delay, x = day), alpha = .8, color = "#fce640", stroke = 0) +
+  facet_grid(month~.) +
+  ylab("Delay in Departure (Minutes)") +
+  xlab("Days of the Month") +
+  ggtitle("Departure Delay correlated with Days of the Month",
+        subtitle = "Limited between 12 hours delay and 2 hours early departure") +
+  labs(caption = "Source: Final Project Datatset")
+```
+
+Clearly, we can observe that during the Christmas Holidays the Departure Delays show an increase in duration, thus suggesting that the consumers spend a lot more time waiting in the airports to depart for their final destination. The same conclusion can be derived for the weekend following Thanksgiving (23 of November, Thursday), which again constitutes an important holiday for the US. People, wait a great amount of time to return to their homes on Sunday instead of leaving a day earlier that the delays are reduced. Finally, we can onserve that during certain days of the week, like Tuesdays or Wednesdays, we have reduced Departure Delay times which is expected since the main reasons for travelling during the week are mostly business related.
 
 ### Day of the Week
 
@@ -207,8 +250,85 @@ TIME OF DEP PLOTS
 
 ### Distance
 
-DISTANCE PLOTS
+Does distance have any specific characteristics and how does the Distance relate to the Delays in Departure?
 
+```{r}
+ggplot(df_backup, aes(x = dep_delay, y = distance)) +
+    geom_point(alpha = .3, color = "#441152", stroke = 0) +
+    xlab("Delays in Departure (Minutes)") +
+    ylab("Distance (Miles)") +
+    ggtitle("Departure Delays in correlation with the travelled Distance") +
+    labs(caption = "Source: Final Project Datatset")
+```
+
+Plotting the scatterplot of the Distance in correlation with the Delays in the Departure, helps us determine the following. 
+
+* The different values of the delays recorded for a specific distance, seem to form a line.  
+* Also, there exist specific intervals of time within a day that the delays accumulate and should be our main focus. 
+
+To further investigate the latter claim, we produce the following two graphs.
+
+```{r}
+ggplot(df_backup, aes(x = dep_delay, y = distance)) +
+    geom_point(alpha = .3, color = "#4E8441", stroke = 0) +
+    xlim(-720,720) +
+    xlab("Delays in Departure (Minutes)") +
+    ylab("Distance (Miles)") +
+    ggtitle("Departure Delays in correlation with the travelled Distance",
+          subtitle = "Limited in 12 hours delays - early departures") +
+    labs(caption = "Source: Final Project Datatset")
+
+ggplot(df_backup, aes(x = dep_delay, y = distance)) +
+    geom_point(alpha = .3, color = "#441152", stroke = 0) +
+    xlim(-180,180) +
+    xlab("Delays in Departure (Minutes)") +
+    ylab("Distance (Miles)") +
+    ggtitle("Departure Delays in correlation with the travelled Distance",
+            subtitle = "Limited in 3 hours delays - early departures") +
+    labs(caption = "Source: Final Project Datatset")
+```
+Now, we can clearly bound the times of the departure delays that we are going to examine between a maximum of 12 hours delay and a maximum of 2 hours early departure. This follows from the fact that a 3 hour delay or early departure interval (latter graph) does not constitute a clear representation of the phenomenon that we are exploring. On the contrary, a 12 hours delay interval is more than enough to give us the full picture and when combined with the 2 hours early departure barrier allow us to have a clear picture of the situation at hand. 
+
+Upon further investigation of the distance variable, we produced a plot of the unique values of the distances traveled to reach each State destination.
+
+```{r}
+states_recode <- c("1" = "AK", "2" = "HI", "3" = "PR", "4" = "VI", "5" = "TT", "11" = "CT", "12" = "ME", "13" = "MA", "14" = "NH", "15" = "RI", "16" = "VT", "21" = "NJ", "22" = "NY", "23" = "PA", "33" = "FL", "34" = "GA", "35" = "MD", "36" = "NC", "37" = "SC", "38" = "VA", "39" = "WV", "41" = "IL", "42" = "IN", "43" = "MI", "44" = "OH", "45" = "WI", "51" = "AL", "52" = "KY", "53" = "MS", "54" = "TN", "61" = "IA", "62" = "KS", "63" = "MN", "64" = "MO", "65" = "NE", "66" = "ND", "67" = "SD", "71" = "AR", "72" = "LA", "73" = "OK", "74" = "TX", "81" = "AZ", "82" = "CO", "83" = "ID", "84" = "MT", "85" = "NV", "86" = "NM", "87" = "UT", "88" = "WY", "91" = "CA", "92" = "OR", "93" = "WA")
+
+distance_state_data <- df %>% select( dest_state, distance ) %>% group_by( dest_state, distance ) %>% summarize( count = n() ) 
+distance_state_data <- distance_state_data %>% mutate( state = states_recode[dest_state])
+
+ggplot(distance_state_data, aes(x = factor(state), y = distance)) +
+    geom_point(alpha = .8, color = "#441152", stroke = 0) +
+    coord_flip() +
+    xlab("Destination (State)") +
+    ylab("Distance (Miles)") +
+    ggtitle("Distance in correlation with the State Destination",
+            subtitle = "Unique Distances traveled to reach corresponding State destination") +
+    labs(caption = "Source: Final Project Datatset")
+```
+
+Additionally, we create a graph of the unique distances that each US carrier claims to have covered. 
+
+```{r}
+distance_carrier_data <- df %>% select( carrier, distance ) %>% group_by( carrier, distance ) %>% summarize( count = n() ) 
+
+ggplot(distance_carrier_data, aes(x = carrier, y = distance)) +
+    geom_point(alpha = .8, color = "#4E8441", stroke = 0) +
+    coord_flip() +
+    xlab("US Carrier") +
+    ylab("Distance (Miles)") +
+    ggtitle("Distance in correlation with the US carrier") +
+    labs(caption = "Source: Final Project Datatset")
+```
+
+Based on the two graphs presented, we were able to observe that the values of the distance variable are a lot more discrete than they were suppose to. Logically speaking, we should have a great variety of values since it is extremely rare for two planes to cover the exact same distance going back or forth to the same destination-origin point. By going back to the source of our data, we were able to conclude that the distance provided by our dataset is an actual approximation of the shortest distance between any two points on the surface of a sphere. Therefore, any two flights with the same start and end points have the same distances. This can be easily verified from the table below.
+
+```{r}
+distance_table <- df %>% select(origin, dest, dest_state, distance) %>% group_by(origin, dest)
+head(distance_table, 10)
+```
+
+ 
 ### Destination Airport
 ```{r}
 top_airports <- df %>% group_by(dest) %>% summarize(num_flights = n())
@@ -495,6 +615,14 @@ ggplot(df, aes(dep_delay, arr_delay)) +
 
 ```
 It appears that there's generally a linear relationship between the two variables where the higher the departure delay, the higher the arrival delay. There are some exceptions to this, and it's important to note that a big number of flights have a significantly high arrival delay despite having almost no departure delay. We hypothesize that this occurs when the destination landing strip is too busy, meaning the pilot is unable to make a landing at the scheduled time. Is this more common for certain airlines or certain airports?
+
+## Departure Delays and Days of the Month
+
+[__Here__](https://bl.ocks.org/yannistze/a0a46f2740c8916dc71fc4da111995d1) is a scatterplot showing the distribution of the departure delays or early departures based on the day of the month. We used a sample of 20% from the whole dataset for better response times and a clear view of the results. Hovering over the name of the Month and then Clicking it will display an enlarged view of the distribution for the corresponding month. The scatterplot allows the user to acquire an accurate glimpse of how the delays and early departures are distributed within the different days of the month and maybe plan his or her departure date accordingly.
+
+## Departure Delays and US Carriers
+
+[__Here__](https://bl.ocks.org/yannistze/f6679d566e5c1d8ceabab043535dfcac) is a chart of boxplots that show the distribution of the departure delays based on the US carrier that fulfills the flight. Taking into account the width of the boxplots, we can infer which carrier fulfills the most flights. Also, when Clicking upon the boxplot of the carrier that interests the viewer, he or she can see the distribution of the departure delays of that carrier, as well as the distribution of the early departed flights. As a result, the viewer can compare the airline carriers and choose according to his or her needs.  
 
 # Interactive component
 
