@@ -11,17 +11,9 @@
 		<script>
 		    d3.csv('cleanest_sample.csv', function(dataset) {    	
 		     	dataset = dataset.map(function(d) {
-		     		// var parseDate = d3.timeParse("%Y-%m-%d");
-		     		// var formatDay = d3.timeFormat("%e");
-		     		// var formatMonth = d3.timeFormat("%m");
-
-		     		// d.date = d.date;
 				    d.carrier = d.carrier;
 				    d.dep_delay = +d.dep_delay;
 				    return{
-				    	// date: d.date,
-				    	// day: +formatDay(parseDate(d.date)),
-				    	// month: +formatMonth(parseDate(d.date)),
 				    	carrier: d.carrier,
 				    	dep_delay: d.dep_delay
 				    }
@@ -30,9 +22,6 @@
 				dataset = dataset.filter(function(d) {
 					if (d.dep_delay <= 720 && d.dep_delay >= -120){
 						return{
-					    	// date: d.date,
-					    	// day: d.day,
-					    	// month: d.month,
 					    	carrier: d.carrier,
 					    	dep_delay: d.dep_delay
 				   		}	
@@ -54,19 +43,22 @@
 			}
 
 			// Actually create the labels
-			function createLabels( svg_el, text_msg, x_val, y_val, f_size, deg_val ){
-				d3.select("#" + svg_el).append("text").text(text_msg)	
-						.attr("x", x_val).attr("y", y_val)
-						.attr("transform", "rotate(" + deg_val + ")")
-						.attr("font-family", "Courier New")
-						.attr("font-size", f_size)
-						.attr("fill", "black");	
+			function createLabels( svg_sel, text_msg, x_val, y_val, f_size, deg_val ){
+				d3.select("#" + svg_sel).append("text")
+										.text(text_msg)	
+										.attr("text-anchor", "middle")
+										.attr("x", x_val)
+										.attr("y", y_val)
+										.attr("transform", "rotate(" + deg_val + ")")
+										.attr("font-family", "Arial")
+										.attr("font-size", f_size)
+										.attr("fill", "black");	
 			}
 
 			
 			function createBoxplot(dataset){
-				const box_width = 1200;
-		        const box_height = 750;
+				const box_width = 1000;
+		        const box_height = 800;
 		        const colors_vals = ["#3366cc", "#dc3912", "#ff9900", "#109618", "#990099", 
 		        					 "#0099c6", "#dd4477", "#66aa00", "#b82e2e", "#316395", 
 		        					 "#994499", "#22aa99", "#aaaa11", "#6633cc", "#e67300", 
@@ -132,53 +124,95 @@
 				});
 
 
-				d3.select("body").append("svg").style("margin", "2.5%");
-				d3.select("svg").attr("width", box_width).attr("height", box_height)
-								.attr("x", "50").attr("y", "50").attr("id", "main_cont");
+				d3.select("body").append("svg")
+								 .attr("id", "main_cont")
+								 .attr("width", box_width)
+								 .attr("height", box_height)
+								 .attr("x", "50")
+								 .attr("y", "50")
+								 .style("margin", "2.5%");
 
 				// Create Main Container's Labels
-				createLabels( "main_cont", "Departure Delay per Airline", "450", "25", "25px", "0" );
-				createLabels( "main_cont", "Airlines in US", "500", "725", "15px", "0" );
-				createLabels( "main_cont", "Departure Delay (Minutes)", "-450", "50", "15px", "-90" );
-				createLabels( "main_cont", "Click on Boxplots for More", "250", "-1175", "15px", "90" );
+				title_1 = "Departure Delay for each Airline";
+				title_1_calc = (box_width - (2 * 0.025 * box_width)) / 2;
+				createLabels( "main_cont", title_1, title_1_calc, 0.04 * box_height, "25px", "0" );
+
+				title_2 = "Airlines in US";
+				title_2_calc = (box_width - (2 * 0.025 * box_width)) / 2;
+				createLabels( "main_cont", title_2, title_2_calc, box_height - 0.05 * box_height, "15px", "0" );
+
+				title_3 = "Departure Delay (Minutes)";
+				title_3_calc = (box_height - (2 * 0.025 * box_height)) / 2;
+				createLabels( "main_cont", title_3, -title_3_calc, 0.05 * box_width, "15px", "-90" );
+
+				title_4 = "Click on Boxplots for More";
+				title_4_calc = (box_height - (2 * 0.025 * box_height)) / 2;
+				createLabels( "main_cont", title_4, title_4_calc, -(box_width - (0.05 * box_width)), "15px", "90" );
+
 
 				// Create Axis Scales
-				var xScale = d3.scalePoint().domain(carriers).range([135,1135]);
+				var xScale = d3.scalePoint().domain(carriers).range([125,900]);
 				var xAxis = d3.axisBottom().scale(xScale);
 
-				var yScale = d3.scaleLinear().domain([-120,720]).range([675,75]);
+				var yScale = d3.scaleLinear().domain([-120,720]).range([700,100]);
 				var yAxis = d3.axisLeft().scale(yScale);
 
-				d3.select("#main_cont").append("g").attr("class", "yAxis").attr("transform", "translate(100, 0)").call(yAxis);	
-				d3.select("#main_cont").append("g").attr("class", "xAxis").attr("transform", "translate(0, 675)").call(xAxis);			
+				d3.select("#main_cont").append("g")
+									   .attr("class", "yAxis")
+									   .attr("transform", "translate(100, 0)")
+									   .call(yAxis);	
+				d3.select("#main_cont").append("g")
+									   .attr("class", "xAxis")
+									   .attr("transform", "translate(0, 700)")
+									   .call(xAxis);			
 
 
 				statistics.forEach( function(data){
 					d3.select("#main_cont").append("g").attr("id", "g" + data.carrier);
 					outliers = data.outliers_d;
 
-					d3.select("#g" + data.carrier).append("line").attr("id", data.carrier)
-								.attr("x1", xScale(data.carrier)).attr("y1", yScale(data.q1_d))
-								.attr("x2", xScale(data.carrier)).attr("y2", yScale(data.q3_d))
-								.attr("stroke", colors_vals.pop()).attr("stroke-width", ((data.delay_size + data.early_size)/dataset.length)*400)
+					d3.select("#g" + data.carrier).append("line")
+								.attr("id", data.carrier)
+								.attr("x1", xScale(data.carrier))
+								.attr("y1", yScale(data.q1_d))
+								.attr("x2", xScale(data.carrier))
+								.attr("y2", yScale(data.q3_d))
+								.attr("stroke", colors_vals.pop())
+								.attr("stroke-width", ((data.delay_size + data.early_size)/dataset.length)*325)
 								.on("click", function(){
-		  						 	d3.select("#main_cont").transition().attr("width", "0").attr("height", "0");
+		  						 	d3.select("#main_cont").transition()
+		  						 						   .attr("width", "0")
+		  						 						   .attr("height", "0");
 		  						 	createSingleBox(statistics, box_width, box_height, this.id);
 		  						});
 
-					d3.select("#g" + data.carrier).append("line").attr("id", data.carrier)
-								.attr("x1", xScale(data.carrier)).attr("y1", yScale(data.median_d-1))
-								.attr("x2", xScale(data.carrier)).attr("y2", yScale(data.median_d+1))
-								.attr("stroke", "black").attr("stroke-width", ((data.delay_size + data.early_size)/dataset.length)*400)
-								.on("click", function(){d3.select("#main_cont").transition().attr("width", "0").attr("height", "0");});
+					d3.select("#g" + data.carrier).append("line")
+								.attr("id", data.carrier)
+								.attr("x1", xScale(data.carrier))
+								.attr("y1", yScale(data.median_d-1))
+								.attr("x2", xScale(data.carrier))
+								.attr("y2", yScale(data.median_d+1))
+								.attr("stroke", "black")
+								.attr("stroke-width", ((data.delay_size + data.early_size)/dataset.length)*325)
+								.on("click", function(){
+									d3.select("#main_cont").transition()
+														   .attr("width", "0")
+														   .attr("height", "0");
+								});
 
-					d3.select("#g" + data.carrier).append("line").attr("x1", xScale(data.carrier)).attr("y1", yScale(data.r0_d))
-																 .attr("x2", xScale(data.carrier)).attr("y2", yScale(data.q1_d))
-																 .attr("stroke", "black");
+					d3.select("#g" + data.carrier).append("line")
+												  .attr("x1", xScale(data.carrier))
+												  .attr("y1", yScale(data.r0_d))
+												  .attr("x2", xScale(data.carrier))
+												  .attr("y2", yScale(data.q1_d))
+												  .attr("stroke", "black");
 
-					d3.select("#g" + data.carrier).append("line").attr("x1", xScale(data.carrier)).attr("y1", yScale(data.r1_d))
-																 .attr("x2", xScale(data.carrier)).attr("y2", yScale(data.q3_d))
-																 .attr("stroke", "black");
+					d3.select("#g" + data.carrier).append("line")
+												  .attr("x1", xScale(data.carrier))
+												  .attr("y1", yScale(data.r1_d))
+												  .attr("x2", xScale(data.carrier))
+												  .attr("y2", yScale(data.q3_d))
+												  .attr("stroke", "black");
 
 					d3.select("#g" + data.carrier).selectAll("dot")
 									           .data(outliers)
@@ -197,42 +231,69 @@
 			function createSingleBox(stats, width, height, box_id){
 				data = stats.filter( function(d){ return d.carrier === box_id } );
 
-				d3.select("body").append("svg").style("margin", "2.5%").attr("id", "detailed_cont")
-								 .attr("width", width).attr("height", height)
-								 .attr("x", "50").attr("y", "50");
+				d3.select("body").append("svg")
+								 .style("margin", "2.5%")
+								 .attr("id", "detailed_cont")
+								 .attr("width", width)
+								 .attr("height", height)
+								 .attr("x", "50")
+								 .attr("y", "50");
 
 				// Create Main Container's Labels
-				createLabels( "detailed_cont", "Departure Delay for '" + box_id + "'", "450", "25", "25px", "0" );
-				createLabels( "detailed_cont", "Departure", "-450", "50", "15px", "-90"  );
-				createLabels( "detailed_cont", "Departure Delay (Minutes)", "500", "725", "15px", "0");
-				createLabels( "detailed_cont", "Click again on Boxplots to go back", "200", "-1175", "15px", "90" );
+				title_1 = "Departure Delay for '" + box_id + "'";
+				title_1_calc = (width - (2 * 0.025 * width)) / 2;
+				createLabels( "detailed_cont", title_1, title_1_calc, 0.04 * height, "25px", "0" );
+
+				title_2 = "Departure";
+				title_2_calc = (width - (2 * 0.025 * width)) / 2;
+				createLabels( "detailed_cont", title_2, title_2_calc, height - 0.05 * height, "15px", "0" );
+
+				title_3 = "Departure Delay (Minutes)";
+				title_3_calc = (height - (2 * 0.025 * height)) / 2;
+				createLabels( "detailed_cont", title_3, -title_3_calc, 0.05 * width, "15px", "-90" );
+
+				title_4 = "Click again on Boxplots to go back";
+				title_4_calc = (height - (2 * 0.025 * height)) / 2;
+				createLabels( "detailed_cont", title_4, title_4_calc, -(width - (0.05 * width)), "15px", "90" );
 
 				// Create Axis Scales
-				var xScale = d3.scaleLinear().domain([-120,720]).range([135,1135]);
+				var xScale = d3.scaleLinear().domain([-120,720]).range([125,900]);
 				var xAxis = d3.axisBottom().scale(xScale);
 
-				var yScale = d3.scalePoint().domain(["Early", "Late"]).range([675,75]).padding([0.7]);
+				var yScale = d3.scalePoint().domain(["Early", "Late"]).range([700,100]).padding([0.7]);
 				var yAxis = d3.axisLeft().scale(yScale);
 
-				d3.select("#detailed_cont").append("g").attr("class", "yAxis").attr("transform", "translate(100, 0)").call(yAxis);	
-				d3.select("#detailed_cont").append("g").attr("class", "xAxis").attr("transform", "translate(0, 675)").call(xAxis);	
+				d3.select("#detailed_cont").append("g")
+										   .attr("class", "yAxis")
+										   .attr("transform", "translate(100, 0)")
+										   .call(yAxis);	
+				d3.select("#detailed_cont").append("g")
+										   .attr("class", "xAxis")
+										   .attr("transform", "translate(0, 700)")
+										   .call(xAxis);	
 
 
 				d3.select("#detailed_cont").append("g").attr("id", "g1" + box_id);
 
 				d3.select("#g1" + box_id).append("line")
-							.attr("y1", yScale("Late")).attr("x1", xScale(data[0].q1_d))
-							.attr("y2", yScale("Late")).attr("x2", xScale(data[0].q3_d))
-							.attr("stroke", "red").attr("stroke-width", (data[0].delay_size/data[0].overall_size)*400)
+							.attr("y1", yScale("Late"))
+							.attr("x1", xScale(data[0].q1_d))
+							.attr("y2", yScale("Late"))
+							.attr("x2", xScale(data[0].q3_d))
+							.attr("stroke", "red")
+							.attr("stroke-width", (data[0].delay_size/data[0].overall_size)*300)
 							.on("click", function(){
 	  						 	d3.selectAll("#detailed_cont").transition().remove();
 	  						 	d3.select("#main_cont").transition().attr("width", width).attr("height", height);
 	  						});
 
 				d3.select("#g1" + box_id).append("line")
-							.attr("y1", yScale("Late")).attr("x1", xScale(data[0].median_d-1))
-							.attr("y2", yScale("Late")).attr("x2", xScale(data[0].median_d+1))
-							.attr("stroke", "black").attr("stroke-width", (data[0].delay_size/data[0].overall_size)*400)
+							.attr("y1", yScale("Late"))
+							.attr("x1", xScale(data[0].median_d-1))
+							.attr("y2", yScale("Late"))
+							.attr("x2", xScale(data[0].median_d+1))
+							.attr("stroke", "black")
+							.attr("stroke-width", (data[0].delay_size/data[0].overall_size)*300)
 							.on("click", function(){
 	  						 	d3.selectAll("#detailed_cont").transition().remove();
 	  						 	d3.select("#main_cont").transition().attr("width", width).attr("height", height);
@@ -261,31 +322,41 @@
 			  	d3.select("#detailed_cont").append("g").attr("id", "g2" + box_id);
 
 				d3.select("#g2" + box_id).append("line")
-							.attr("y1", yScale("Early")).attr("x1", xScale(data[0].q1_e))
-							.attr("y2", yScale("Early")).attr("x2", xScale(data[0].q3_e))
-							.attr("stroke", "lightgreen").attr("stroke-width", (data[0].early_size/data[0].overall_size)*400)
+							.attr("y1", yScale("Early"))
+							.attr("x1", xScale(data[0].q1_e))
+							.attr("y2", yScale("Early"))
+							.attr("x2", xScale(data[0].q3_e))
+							.attr("stroke", "lightgreen")
+							.attr("stroke-width", (data[0].early_size/data[0].overall_size)*300)
 							.on("click", function(){
 	  						 	d3.selectAll("#detailed_cont").transition().remove();
 	  						 	d3.select("#main_cont").transition().attr("width", width).attr("height", height);
 	  						});
 
 				d3.select("#g2" + box_id).append("line")
-							.attr("y1", yScale("Early")).attr("x1", xScale(data[0].median_e-1))
-							.attr("y2", yScale("Early")).attr("x2", xScale(data[0].median_e+1))
-							.attr("stroke", "black").attr("stroke-width", (data[0].early_size/data[0].overall_size)*400)
+							.attr("y1", yScale("Early"))
+							.attr("x1", xScale(data[0].median_e-1))
+							.attr("y2", yScale("Early"))
+							.attr("x2", xScale(data[0].median_e+1))
+							.attr("stroke", "black")
+							.attr("stroke-width", (data[0].early_size/data[0].overall_size)*300)
 							.on("click", function(){
 	  						 	d3.selectAll("#detailed_cont").transition().remove();
 	  						 	d3.select("#main_cont").transition().attr("width", width).attr("height", height);
 	  						});
 
 				d3.select("#g2" + box_id).append("line")
-										.attr("y1", yScale("Early")).attr("x1", xScale(data[0].r0_e))
-										.attr("y2", yScale("Early")).attr("x2", xScale(data[0].q1_e))
+										.attr("y1", yScale("Early"))
+										.attr("x1", xScale(data[0].r0_e))
+										.attr("y2", yScale("Early"))
+										.attr("x2", xScale(data[0].q1_e))
 										.attr("stroke", "black");
 
 				d3.select("#g2" + box_id).append("line")
-										.attr("y1", yScale("Early")).attr("x1", xScale(data[0].r1_e))
-										.attr("y2", yScale("Early")).attr("x2", xScale(data[0].q3_e))
+										.attr("y1", yScale("Early"))
+										.attr("x1", xScale(data[0].r1_e))
+										.attr("y2", yScale("Early"))
+										.attr("x2", xScale(data[0].q3_e))
 										.attr("stroke", "black");
 
 				d3.select("#g2" + box_id).selectAll("dot")
