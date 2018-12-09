@@ -529,7 +529,7 @@ flight_state$dest_state <- reorder(flight_state$dest_state, flight_state$mean_ar
 ggplot(flight_state) +
   geom_point(aes(mean_arr, dest_state, color = 'mean_arr'), size = 3) +
   geom_point(aes(mean_dep, dest_state, color = 'mean_dep'), size = 3) +
-  labs(title = "Delay Time of Flights over States", x = "Mean Delay in Mintutes", y = "", color = '') +
+  labs(title = "Arrival and Departure Delay over States", x = "Average Delay in Mintutes", y = "", color = '') +
   theme(legend.position = 'bottom') + 
   scale_color_manual(name = '', values = c('mean_arr'= '#774184', 'mean_dep'='#4E8441'), labels=c("Arrival Delay", "Departure Delay"))
 
@@ -540,11 +540,11 @@ names(arr_map_form)[2] <- paste('value')
 arr_map_form$region <- as.character(arr_map_form$region)
 arr_map_form$region <- tolower(arr_map_form$region)
 # generate arrival map
-arr_map <- StateChoropleth$new(flight_state_map)
-arr_map$title = "Arrival Delay of Flights in the fourth quarter of the year 2017"
+arr_map <- StateChoropleth$new(arr_map_form)
+arr_map$title = "Arrival Delay over States"
 arr_map$show_labels = FALSE
 arr_map$set_num_colors(1)
-arr_map$ggplot_scale = scale_fill_viridis(name = 'Mean Arrival Delay in Minutes')
+arr_map$ggplot_scale = scale_fill_viridis(name = 'Average Arrival Delay in Minutes')
 arr_map$render()
 ```
 
@@ -557,7 +557,7 @@ We surprisingly found the average departure delay is higher than the average arr
 flight_state$dest_state <- reorder(flight_state$dest_state, flight_state$mean_diff)
 ggplot(flight_state) +
   geom_point(aes(mean_diff, dest_state), color = '#774184', size = 3) +
-  labs(title = "Delay Difference between Depature and Arrival Delays over States", x = "Mean Difference in Mintutes", y = "", color = '')
+  labs(title = "Difference between Departure and Arrival Delay over States", x = "Average Difference in Mintutes", y = "", color = '')
 
 # generate diff map format for choropleth
 diff_map_form <- subset(flight_state, select = c('dest_state', 'mean_diff'))
@@ -568,10 +568,10 @@ diff_map_form$region <- tolower(diff_map_form$region)
 
 # generate diff map
 diff_map <- StateChoropleth$new(diff_map_form)
-diff_map$title = "Delay Time Difference of Flights in the fourth quarter of the year 2017"
+diff_map$title = "Difference between Departure and Arrival Delay over States"
 diff_map$show_labels = FALSE
 diff_map$set_num_colors(1)
-diff_map$ggplot_scale = scale_fill_viridis(name = 'Delay Time Difference in Minutes')
+diff_map$ggplot_scale = scale_fill_viridis(name = 'Average Difference in Minutes')
 diff_map$render()
 ```
 
@@ -610,12 +610,12 @@ It appears that there's generally a positive linear relationship between the two
 
 ## Make-up Delay and State
 ```{r main choropleth}
-difference_map <- StateChoropleth$new(diff_map)
-difference_map$title = "Average Difference between Departure and Arrival Delay"
-difference_map$show_labels = FALSE
-difference_map$set_num_colors(1)
-difference_map$ggplot_scale = scale_fill_viridis(name = 'Difference in Minutes')
-difference_map$render()
+diff_map <- StateChoropleth$new(diff_map_form)
+diff_map$title = "Average Difference between Departure and Arrival Delay"
+diff_map$show_labels = FALSE
+diff_map$set_num_colors(1)
+diff_map$ggplot_scale = scale_fill_viridis(name = 'Difference in Minutes')
+diff_map$render()
 ```
 
 The Northwestern states; Washington, Oregon, Idaho, Montana, Wyoming, North Dakota and South Dakota have the lowest difference in separture and arrival delay. Again, this contradicts our hypothesis that longer flights allow a pilot to make-up for departure delays. The state with the highest mean difference in delays is New York, the complete opposite of what we hypothesized. Why short flights more often experience large differences in delay? 
