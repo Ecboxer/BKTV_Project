@@ -452,11 +452,11 @@ flight_state <- flight %>%
 # cleveland plot of arrival time and depature time
 flight_state$dest_state <- reorder(flight_state$dest_state, flight_state$mean_arr)
 ggplot(flight_state) +
-  geom_point(aes(mean_arr, dest_state, color = '#774184'), size = 3) +
-  geom_point(aes(mean_dep, dest_state, color='#4E8441'), size = 3) +
+  geom_point(aes(mean_arr, dest_state, color = 'mean_arr'), size = 3) +
+  geom_point(aes(mean_dep, dest_state, color = 'mean_dep'), size = 3) +
   labs(title = "Delay Time of Flights over States", x = "Mean Delay in Mintutes", y = "", color = '') +
-  theme(legend.position = 'bottom') +
-  scale_color_hue(labels = c('Arrival Delay', 'Departure Delay'))
+  theme(legend.position = 'bottom') + 
+  scale_color_manual(name = '', values = c('mean_arr'= '#774184', 'mean_dep'='#4E8441'), labels=c("Arrival Delay", "Departure Delay"))
 
 # tidy data for map
 flight_state2 <- df %>%
@@ -492,17 +492,19 @@ region_code2 <- "31"
 region_name2 <- "delaware"
 flight_state_map$region[flight_state_map$region == region_code] <- region_name
 flight_state_map$region[flight_state_map$region == region_code2] <- region_name2
-state_choropleth(flight_state_map,
-                 title = "Arrival Delay of Flights in the fourth quarter of the year 2017",
-                 legend = 'Mean Arrival Delay in Minutes')
-state <- map_data('state')
-temp <- merge(x=state, y=flight_state_map, by='region', all.x=T)
-ggplot(temp, aes(x = long, y=lat, group = group)) +
-    geom_polygon(aes(fill=value)) +
-    coord_map() + scale_fill_viridis()
+
+arr_map <- StateChoropleth$new(flight_state_map)
+arr_map$title = "Arrival Delay of Flights in the fourth quarter of the year 2017"
+arr_map$show_labels = FALSE
+arr_map$set_num_colors(1)
+arr_map$ggplot_scale = scale_fill_viridis(name = 'Mean Arrival Delay in Minutes')
+arr_map$render()
+
 ```
 
-The interesting pattern between flights' depature time and arrival time enables us to explore the reasons behind it.  The first question we asked was whether the distance of traveling influence on the flights' time performance. Though there is no real travling distance for each flight, the destination state of each flight can roughly represent their travling distance. We found that neither the depature delay or the arrival delay associate with the distance of traveling, represented by the locations of states. For exmaple, both flights flew to New Jersey and Puerto Rico had the high average deapture dealy and arrival dealy, but New Jersey is much closer to New York City than Puerto Rico. However, we surprisingly found that the average depature time is higher than the average arrival time, whatever the traveling distance is far from or close to New York City. This implies that the piolets usually make up time during the flight driving when the flights leave later than then expected depature time. Even when the flights leave earlier than the expected depture time in Alaska, the piolts still make up time during their flight driving.
+The interesting pattern between flights' depature time and arrival time enabled us to explore the reasons behind it.  The first question was whether the destination state influence on the flights' time performance because some states are far away from New York City, but some are close, and some have large population density, but some have small pouplation density. We found that neither the depature delay or the arrival delay associate with the states. The states with high arrival delay time and low arrival delay time distribute on each region of the United States. The top five states with high arrival delay are New Jersey, Puerto Rico, U.S. Virgin Islands, Hawaii and New York, and there were no information about the flights from New York City to Delaware. The bottom five states with low arrival delay are Virginia, Maryland, Utah, South Carolina and U.S. Pacific Trust Territories and Possessions.
+However, we surprisingly found that all the average depature time was higher than the average arrival time in the relevant state, whatever they are the location and the poulation of the states. This implies that the piolets usually make up time during the flight driving when the flights leave later than then expected depature time. Even when the flights leave earlier than the expected depture time in Alaska, the piolts still make up time during their flight driving. Thus, we investigated the make up time during the pilots' driving to each states.
+
 
 ```{r destination state delay time difference}
 # cleveland plot of time difference
@@ -539,16 +541,16 @@ region_code2 <- "31"
 region_name2 <- "delaware"
 diff_map$region[diff_map$region == region_code] <- region_name
 diff_map$region[diff_map$region == region_code2] <- region_name2
-state_choropleth(diff_map,
-                 title = "Delay Time Difference of Flights in the fourth quarter of the year 2017",
-                 legend = 'Delay Time Difference in Minutes')
-temp <- merge(x=state, y=diff_map, by='region', all.x=T)
-ggplot(temp, aes(x = long, y=lat, group = group)) +
-    geom_polygon(aes(fill=value)) +
-    coord_map() + scale_fill_viridis()
+
+difference_map <- StateChoropleth$new(diff_map)
+difference_map$title = "Delay Time Difference of Flights in the fourth quarter of the year 2017"
+difference_map$show_labels = FALSE
+difference_map$set_num_colors(1)
+difference_map$ggplot_scale = scale_fill_viridis(name = 'Delay Time Difference in Minutes')
+difference_map$render()
 ```
 
-Since we found that  the pilots usually make up time during their drivings, we next asked the question that the flights to which states had the most make up time. To our surprise, the make up time does not relate to the distance of traveling, which is represented by the states. For instance, the flights flew from New York City to Maryland, Minnesota, New York, South Carolina and Arizona had similar make up time, but the distance from New York City are much more closer to Maryland and New York to South Carolina, Minnesota and Arizona. Several states showed interesting make up time, U.S. Pacfic Trust Territories and Possessions with the highest and Hawaii and Alaska with the lowest, which need further exploration.
+To our surprise, the flights to the northwest states had lower make up time than other states, including Washing, Oregon, Idaho, Montana, Wyoming, North Dakota and South Dakota. This implies that the piolts do not need to make up much time when they fly to these states. The states with high time up and low time up distribute on the other regions of the United States. In addition to the northwest states, Alaska, Hawaii, U.S. Virgin Islands and Mississippi also have low make up time. The top five high make up time appear in flights flew to U.S. Pacific Trust Terries and Possessions, Maryland, Minnesota, New York and New Hampshire, which means the piolts make up more time when they fly to these states than others.
 
 PLOTS SHOWING RELATIONSHIP BETWEEN ARR DELAY, DEP DELAY AND DESTINATION STATE
 ### Destination Airport
@@ -635,7 +637,7 @@ It appears that there's generally a linear relationship between the two variable
 [__Here__](https://bl.ocks.org/yannistze/f6679d566e5c1d8ceabab043535dfcac) is a chart of boxplots that show the distribution of the departure delays based on the US carrier that fulfills the flight. Taking into account the width of the boxplots, we can infer which carrier fulfills the most flights. Also, when Clicking upon the boxplot of the carrier that interests the viewer, he or she can see the distribution of the departure delays of that carrier, as well as the distribution of the early departed flights. As a result, the viewer can compare the airline carriers and choose according to his or her needs.  
 
 # Conclusion
+In this study, we used Airline On-Time Performance Data from the United States Department of Transportation to explore the on-time performances of airlines departed from New York City in the fourth quarter of the year of 2017. We analyzed departure time from the following aspects, the date, the distance, the states and the carrier. We found that the departure delay time was higher during the holiday season, Thanksgiving and Christmas and the flights were more likely to depart earlier than later (?). Conclusion of the relationship between distance and delay&state (?) Conclusion of the relationship between carrier and delay. After analyzing the flights' departure time performance, we moved on to their arrival time performance. There was a rough linear relationship between the departure time and arrival time. Another interesting discovery is many flights arrived at their destination later than the expected time even they departure on time. Further, the arrival delay time was not related to the flights' distance, reflected by the states, but several airports showed higher arrival delay performance, such as Newark Liberty International Airport and San Francisco International Airport. (?)
+The limited information and rough calculation from this dataset limited us to do more further investigations. In this dataset, the distance is calculated as the distance between two airports, not the real traveling distance. We are interested in the relationship between the flights' departure and arrival time performance and the real traveling distance reflected by the airplane meters. We are also passionate to know more information about the number of passengers each airplane carried, and thus we can add a new dimension, the capacity of airline to our analysis of flights' time performance. Another in-dept study based on our results is the relationship between departure delay and arrival delay. We are interested in to analyze more data to see whether it is a causal relationship. In addition, there were certain number of flights arrived late with on time or even early departure, the reasons behind this pattern showed in our analysis attracted us to do more investigations.
+We did not analyze several interesting features in this dataset due to the lack of time. The 'NA' value, which we filtered in the departure and arrival delay variables represents the cancelled planes. Some reasons for the cancellation were recorded in the online data. It will be interesting to analyze the situations of cancellations and explore the reasons. We only focused on the flights departed from New York City, a big city with great people transportation at the fourth quarter of the year 2017. It will be interesting to analyze the data from the whole dataset from xxx to present and the airplanes departed from big cities, such as Boston, Washington D.C., San Francisco and Los Angeles. We may can confirm our finding that the flights usually delay longer during the holiday seasons and may also conclude some new discoveries which we did not obtain from our analysis, such as the dimension of states and airports. 
 
-#### Future direction
-* Cancellations, ie does the presence of cancelled flights increase the delays for flights that did depart?
-* Other origin airports
