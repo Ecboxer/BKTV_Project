@@ -18,10 +18,10 @@ knitr::opts_chunk$set(echo = TRUE,
 In today’s day and age where the consumer has zero tolerance for inefficiencies, one can’t help but wonder how flight delays are still prevalent. How can multimillion dollar airlines fail to anticipate these at a consistent basis? It is certainly to the benefit of all parties involved that they don’t occur, so how come one in three flights is delayed? As frequent flyers and curious data scientists, we set out to explore the natural phenomenon that is flight delays and its causes. Can we find a common denominator amongst all delays?
 
 The team consists of four members where each analyzed the corresponding variables:  
-* Eric Boxer: time, date, day of the week, destination.  
-* Kai Kang: destination airport, destination states.  
-* Ioannis Tzemos: distance, day of the month, carrier.  
-* Costas Vafeades: day of the week, makeup delay, carrier and destination popularity.  
+* Eric Boxer: time, date, day of the week, destination  
+* Kai Kang: destination states and departure less arrival delay  
+* Ioannis Tzemos: distance, day of the month, carrier  
+* Costas Vafeades: day of the week, makeup delay, carrier and destination popularity  
 
 On top of the contributions listed above, every member took it upon himself to further add value. A visualization aficionado, Eric produced half of the interactive plots found in our main analysis and maintained our project repository. Kai, a teamwork veteran, kept notes and led the discussions in our weekly meetings. Our efficiency expert Ioannis produced the other half of the interactive plots and optimized our pipeline’s run-time. Finally, as meticulous one as can be, Costas provided structure by producing agendas and schedules for the group and set up the data pipeline with Eric.
 
