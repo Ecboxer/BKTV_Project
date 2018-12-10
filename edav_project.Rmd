@@ -320,7 +320,7 @@ ggplot(distance_state_data, aes(x = state, y = distance)) +
     labs(caption = "Source: Final Project Dataset")
 ```
 
-Additionally, we create a graph of the unique distances that each Airline claims to have covered. 
+Additionally, we create a graph of the distances that each Airline claims to have covered. 
 
 ```{r distance carrier}
 distance_carrier_data <- df %>% select( carrier, distance ) %>% group_by( carrier, distance ) %>% summarize( count = n() ) 
