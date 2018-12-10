@@ -17,7 +17,8 @@ knitr::opts_chunk$set(echo = TRUE,
 
 In today’s day and age where the consumer has zero tolerance for inefficiencies, one can’t help but wonder how flight delays are still prevalent. How can multimillion dollar airlines fail to anticipate these at a consistent basis? It is certainly to the benefit of all parties involved that they don’t occur, so how come one in three flights is delayed? As frequent flyers and curious data scientists, we set out to explore the natural phenomenon that is flight delays and its causes. Can we find a common denominator amongst all delays?
 
-The team consists of four members where each analyzed the corresponding variables:  
+The team consists of four members where each analyzed the corresponding variables:
+
   * Eric Boxer: time, date, day of the week, destination  
   * Kai Kang: destination states and departure less arrival delay  
   * Ioannis Tzemos: distance, day of the month, carrier  
@@ -40,6 +41,7 @@ In a nutshell, our data can be found:
       * Reporting Carrier On-Time Performance (1987-present)
 
 Given the plethora of available data, we had to implement an initial filtering before the dataset could be extracted. Based on the available parameters for compressed downloading that the website provides, we agreed upon the following conditions:
+
 * From a total of 111 different features, distributed across 12 groups each encapsulating features relevant to the topic of the group, we chose 19 of them. These features can be combined to produce an answer for our already introduced questions. 
 * Additionally, based on the fact that we wanted to explore the time delays in crucial periods within a year, we focused our data extraction on the last trimester of 2017 (October to December). During that time of year, there exist at least two major holidays (Thanksgiving and Christmas) when traveling is frequent and the delays can be clearly evaluated. Of course, we also included October in order to keep our conclusions unbiased and have a more clear representation of the situation concerning the delays. 
 * Finally, our dataset’s aim was to provide data for domestic flights out of New York, for any available airline company that fulfills such flights and to every possible destination in United States.
@@ -62,11 +64,13 @@ options(scipen=1)
 ## Pipeline
 [__Here__](https://github.com/Ecboxer/BKTV_Project/blob/master/pipeline_opt.R) is our script.  
 Having downloaded data as three csv files (one for each of October, November and December 2017) we wrote an R script to construct features for departure and arrival delays and output two csvs, of the full dataset and of a representative random sample.  
-The pipeline:  
+The pipeline:
+
   * Binds csv files of October, November and December flights by row,  
   * Renames columns of the combined dataframe for easier access,  
   * Formats departure and scheduled departure times from 'HH:MM' to 'YYYY:mm:dd HH:MM:00' and takes their difference to find departure delay in minutes,  
   * Repeats the previous step for arrival and scheduled arrival times to find arrival delays.  
+  
 Since the full data set contains 1.4 million rows, in the interest of quick computations and visualization in the exploratory data analysis phase, we took a random sample of 150 000 rows from the processed data. 150 000 was arrived at as a compromise between the processing speed of a small sample and the representativeness of a large one.
 
 ```{r load data}
@@ -107,7 +111,8 @@ df %>% filter(!is.na(canc_code)) %>%
 Cancellation codes are categorised by cause of cancellation as follows: A Carrier, B Weather, C National Air System, D Security. Security cancellations accounted for a tiny proportion while weather cancellations were the most frequent. We opted to forgo further investigation of cancellation. Since these flights never departed, there is no delay information from any of these observations in this dataset.
 
 ## Explain metadata
-The final features are as follows:  
+The final features are as follows: 
+
   * date: flight date in the format YYYY-mm-dd  
   * carrier: a unique two-letter carrier code for each airline, ie 'AA' for American Airlines  
   * flight_num: a unique four-digit number for each flight  
@@ -161,12 +166,15 @@ df <- df %>%
 # Main analysis (Exploratory Data Analysis)
 
 Our data exploration starts by first looking at variables that might help explain the delay:
+
   * Date  
   * Day of the Week  
   * Distance  
   * Destination Airport  
   * Carrier  
-Naturally, we then proceed by looking at the following variables in an effort to determine if delays can be amended for:  
+  
+Naturally, we then proceed by looking at the following variables in an effort to determine if delays can be amended for:
+
   * Arrival Delay  
   * Airline  
   * Destination Airport  
@@ -264,7 +272,8 @@ ggplot(df_backup, aes(x = dep_delay, y = distance)) +
     labs(caption = "Source: Final Project Dataset")
 ```
 
-Plotting the scatterplot of the Distance in correlation with the Departure Delay, helps us determine the following: 
+Plotting the scatterplot of the Distance in correlation with the Departure Delay, helps us determine the following:
+
 * The different values of the delays recorded for a specific distance, seem to form a line.  
 * Also, there is a specific interval of delay that should become our main focus. 
 
@@ -385,11 +394,13 @@ df_n %>% filter(avg_delay > 10) %>% ggplot() +
   labs(caption = "Source: Final Project Dataset")
 ```
 
-When we filter to those airports with average delays greater than ten minutes, airport 11618 Newark stand out as by far the most popular destination in this bracket. As with the negative delay visualization, there are a small number of outliers in terms of average delay:  
+When we filter to those airports with average delays greater than ten minutes, airport 11618 Newark stand out as by far the most popular destination in this bracket. As with the negative delay visualization, there are a small number of outliers in terms of average delay:
+
   * 13388 Mammoth Lakes, California  
   * 15295 Toledo, OH  
   * 13964 North Bend/Coos Bay, Oregon  
   * 10372 Aspen, Colorado  
+  
 Mammoth Lakes and Aspen are both ski resort towns so it might be interesting to look at the average delays in the summer to see if there is a reversion to the mean during warmer months. 
 
 ### Carrier
@@ -409,7 +420,8 @@ df$pop_carrier <- ifelse(df$carrier %in% last_carriers$carrier, "Not Busy", df$p
 head(top_carriers)
 ```
 
-The five most popular airlines are:  
+The five most popular airlines are:
+
   * WN: Southwest Airlines  
   * DL: Delta Airlines  
   * AA: American Airlines  
@@ -420,7 +432,8 @@ The five most popular airlines are:
 head(last_carriers)
 ```
 
-The five least popular airlines are:  
+The five least popular airlines are:
+
   * VX: Virgin America  
   * HA: Hawaiian Airlines  
   * F9: Frontier Airlines  
