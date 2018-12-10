@@ -15,21 +15,21 @@ knitr::opts_chunk$set(echo = TRUE,
 
 # Introduction
 
-In today’s day and age where the consumer has zero tolerance for inefficiencies, one can’t help but wonder how flight delays are still prevalent. How can multimillion dollar airlines fail to anticipate these at a consistent basis? It is certainly to the benefit of all parties involved that they don’t occur, so how come one in three flights is delayed? As frequent flyers and curious data scientists, we set out to explore the natural phenomenon that is flight delays and its causes. Can we find a common denominator amongst delays?
+In today’s day and age where the consumer has zero tolerance for inefficiencies, one can’t help but wonder how flight delays are still prevalent. How can multimillion dollar airlines fail to anticipate these at a consistent basis? It is certainly to the benefit of all parties involved that they don’t occur, so how come one in three flights is delayed? As frequent flyers and curious data scientists, we set out to explore the natural phenomenon that is flight delays and its causes. Can we find a common denominator amongst all delays?
 
-The team consists of four members where each analyzed a specific variable’s impact on flight delay:  
+The team consists of four members where each analyzed the corresponding variables:  
 * Eric Boxer: time, date, day of the week, destination.  
 * Kai Kang: destination airport, destination states.  
 * Ioannis Tzemos: distance, day of the month, carrier.  
 * Costas Vafeades: day of the week, makeup delay, carrier and destination popularity.  
 
-On top of the contributions listed above, every member took it upon himself to further add value. A visualization aficionado, Eric produced half of the interactive plots found in our main analysis and maintained our project repository. Kai, a teamwork veteran, kept notes and led the discussions in our weekly meetings. Our efficiency expert Ioannis produced the other half of the interactive plots and optimized our pipeline’s run-time. Finally, as meticulous as can be, Costas provided structure by producing agendas and schedules for the group and set up the data pipeline with Eric.
+On top of the contributions listed above, every member took it upon himself to further add value. A visualization aficionado, Eric produced half of the interactive plots found in our main analysis and maintained our project repository. Kai, a teamwork veteran, kept notes and led the discussions in our weekly meetings. Our efficiency expert Ioannis produced the other half of the interactive plots and optimized our pipeline’s run-time. Finally, as meticulous one as can be, Costas provided structure by producing agendas and schedules for the group and set up the data pipeline with Eric.
 
 We used Github to collaborate and our Github repository can be found [here](https://github.com/Ecboxer/BKTV_Project).
 
 # Description of data
 
-Having chosen our topic, we steered our focus towards finding a dataset that can answer the above mentioned questions for us. As our source for data, we used the website of the [United States Department of Transportation](https://transtats.bts.gov/databases.asp?Mode_ID=1&Mode_Desc=Aviation&Subject_ID2=0). Of course, based on our goal, we interacted only with the portion of their collected data library that deals with the topic of Aviation.
+Having chosen our topic, we steered our focus towards finding a dataset that can answer the aforementioned questions for us. As our source for data, we used the website of the [United States Department of Transportation](https://transtats.bts.gov/databases.asp?Mode_ID=1&Mode_Desc=Aviation&Subject_ID2=0). Of course, based on our goal, we interacted only with the portion of their collected data library that deals with the topic of Aviation.
 
 The Aviation Data Library, incorporates 26 different databases with data going back to one or even two decades. From the available databases, we used the one called “Airline On-Time Performance Data”. It stores, amongst other features, monthly data for scheduled and actual arrival or departure times of flights as reported by US certified air carriers. The “Reporting Carrier On-Time Performance (1987-present)” table, is the one that we drew our dataset from.
 
@@ -55,6 +55,8 @@ library(choroplethr)
 library(choroplethrMaps)
 # Set default theme
 theme_set(theme_bw())
+
+options(scipen=1)
 ```
 
 # Analysis of data quality
@@ -162,11 +164,10 @@ df <- df %>%
 Our data exploration starts by first looking at variables that might help explain the delay:
 * Date  
 * Day of the Week  
-* Time of Departure  
 * Distance  
 * Destination Airport  
 * Carrier  
-Naturally, we then proceed to examine whether delays can be ammended for by examining its relationship with the following variables:  
+Naturally, we then proceed by looking at the following variables in an effort to determine if delays can be amended for:  
 * Arrival Delay  
 * Airline  
 * Destination Airport  
@@ -199,7 +200,7 @@ ggplot() +
   labs(caption = "Source: Final Project Dataset")
 ```
 
-Clearly we can observe that during the Christmas holidays, departure delay shows an increase in duration, thus suggesting that passengers spend a lot more time waiting in airports to depart for their final destination. The same conclusion can be derived for the weekend following Thanksgiving (Thursday the 23 of November), which again constitutes an important holiday for the US. People wait a great amount of time to return to their homes on Sunday instead of leaving a day earlier when delays are reduced. Finally, we can observe that during certain days of the week, like Tuesdays or Wednesdays, we have reduced Departure Delay times. This is expected since the main reasons for travelling during the week are business related.
+Clearly we can observe that during the Christmas holidays, departure delay shows an increase in duration, thus suggesting that passengers spend a lot more time waiting in airports to depart for their final destination. The same conclusion can be derived for the weekend following Thanksgiving (Thursday the 23 of November), which again constitutes an important holiday for the US. Departure delays during the Thanksgiving period are at a high on Sunday, when most people are returning home. Finally, we can observe that certain days of the week, like Tuesdays or Wednesdays, have reduced Departure Delay times. This is expected since the main reasons for travelling during the week are business related.
 
 ### Day of the Week
 
@@ -217,7 +218,7 @@ ggplot(num_flights, aes(weekday, perc)) +
   labs(caption = "Source: Final Project Dataset")
 ```
 
-Flights seem to be evenly distributed over all days except Saturdays. This somewhat makes sense, as travellers with flights on Saturdays are more likely to be on vacations - and they are more likely to depart on Friday for their destination. How do delays relate to days of the week?
+Flights seem to be evenly distributed over all days except Saturdays. This makes sense, as travellers with flights on Saturdays are likely to be on vacation - and are consequently more likely to depart for their destination on Friday. How do delays relate to days of the week?
 
 ```{r day of the week boxplot}
 df$weekday <- factor(df$weekday, levels = c('Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'))
@@ -238,7 +239,7 @@ ggplot(subset(df, df$dep_delay >0), aes(x=weekday, y=log(dep_delay))) + geom_box
   labs(caption = "Source: Final Project Dataset")
 ```
 
-Evidently, delays are very similar over each day so there's no significant observation to be made. Can we learn anything by looking at negative delays?
+Judging by the plot, delays are generally lower during Tuesdays, Wednesdays and Thursdays and pick up during the weekend. We assume this is due to the fact that most flights during those days are business related and also earlier on in the day, which as shown later on also plays a factor.
 
 ```{r day of the week split}
 df$pos_delay <- ifelse(df$dep_delay > 0, 'Positive', 'Negative')
@@ -253,22 +254,22 @@ More flights depart early than late, but positive delays have greater range. Ear
 
 ### Distance
 
-Does distance have any specific characteristics and how does the Distance relate to the Delays in Departure?
+How does distance relate to Departure Delays?
 
 ```{r distance}
 ggplot(df_backup, aes(x = dep_delay, y = distance)) +
     geom_point(alpha = .3, color = "#441152", stroke = 0) +
     xlab("Delays in Departure (Minutes)") +
     ylab("Distance (Miles)") +
-    ggtitle("Departure Delays in correlation with the travelled Distance") +
+    ggtitle("Departure Delays in relation to the travelled Distance") +
     labs(caption = "Source: Final Project Dataset")
 ```
 
-The scatterplot of distance in correlation with departure delay helps us determine the following:  
-* Different values of delay recorded for a specific distance seem to form a line.  
-* There exist specific intervals of time within a day that delays accumulate and these should be our main focus. 
+Plotting the scatterplot of the Distance in correlation with the Departure Delay, helps us determine the following: 
+* The different values of the delays recorded for a specific distance, seem to form a line.  
+* Also, there is a specific interval of delay that should become our main focus. 
 
-To further investigate the latter claim, we produce the following two graphs:
+To further investigate the latter claim, we produce the following two graphs.
 
 ```{r distance under 12 hrs}
 ggplot(df_backup, aes(x = dep_delay, y = distance)) +
@@ -276,7 +277,7 @@ ggplot(df_backup, aes(x = dep_delay, y = distance)) +
     xlim(-720,720) +
     xlab("Delays in Departure (Minutes)") +
     ylab("Distance (Miles)") +
-    ggtitle("Departure Delays in correlation with the travelled Distance",
+    ggtitle("Departure Delays in relation to the travelled Distance",
           subtitle = "Limited in 12 hours delays - early departures") +
     labs(caption = "Source: Final Project Dataset")
 ```
@@ -286,7 +287,7 @@ ggplot(df_backup, aes(x = dep_delay, y = distance)) +
     xlim(-180,180) +
     xlab("Delays in Departure (Minutes)") +
     ylab("Distance (Miles)") +
-    ggtitle("Departure Delays in correlation with the travelled Distance",
+    ggtitle("Departure Delays in relation to the travelled Distance",
             subtitle = "Limited in 3 hours delays - early departures") +
     labs(caption = "Source: Final Project Dataset")
 ```
@@ -306,12 +307,12 @@ ggplot(distance_state_data, aes(x = state, y = distance)) +
     xlab("Destination (State)") +
     ylab("Distance (Miles)") +
     theme(axis.text.x = element_text(size = 5)) +
-    ggtitle("Distance in correlation with the State Destination",
+    ggtitle("Distance in relation to the State Destination",
             subtitle = "Unique Distances traveled to reach corresponding State destination") +
     labs(caption = "Source: Final Project Dataset")
 ```
 
-Additionally, we create a graph of the unique distances that each US carrier claims to have covered. 
+Additionally, we create a graph of the unique distances that each Airline claims to have covered. 
 
 ```{r distance carrier}
 distance_carrier_data <- df %>% select( carrier, distance ) %>% group_by( carrier, distance ) %>% summarize( count = n() ) 
@@ -321,11 +322,11 @@ ggplot(distance_carrier_data, aes(x = carrier, y = distance)) +
     coord_flip() +
     xlab("US Carrier") +
     ylab("Distance (Miles)") +
-    ggtitle("Distance in correlation with the US carrier") +
+    ggtitle("Distance in correlation with the Airline") +
     labs(caption = "Source: Final Project Dataset")
 ```
 
-Based on the two graphs presented, we were able to observe that values of the distance variable are more discrete than they were expected to be. Logically speaking, we should have a greater variety of values since it is extremely rare for two planes to cover the exact same distance going back and forth to the same destination. By going back to the source of our data, we were able to discover that distances provided by our dataset are  approximations of the shortest distance between any two points on the surface of a sphere. Therefore, any two flights with the same start and end points have the same distances. This can be verified from the table below.
+Based on the two graphs presented, we are able to observe that values of the distance variable are more discrete than they were expected to be. Logically speaking, we should have a greater variety of values since it is extremely rare for two planes to cover the exact same distance going back and forth to the same destination. By going back to the source of our data, we were able to discover that distances provided by our dataset are  approximations of the shortest distance between any two points on the surface of a sphere. Therefore, any two flights with the same start and end points have the same distances. This can be verified from the table below.
 
 ```{r distance table}
 distance_table <- df %>% select(origin, dest, dest_state, distance) %>% group_by(origin, dest)
@@ -391,32 +392,6 @@ When we filter to those airports with average delays greater than ten minutes, a
 * 13964 North Bend/Coos Bay, Oregon  
 * 10372 Aspen, Colorado  
 Mammoth Lakes and Aspen are both ski resort towns so it might be interesting to look at the average delays in the summer to see if there is a reversion to the mean during warmer months. 
-
-```{r airport df}
-top_airports <- df %>% group_by(dest) %>% summarize(num_flights = n())
-top_airports <- top_airports[order(-top_airports$num_flights), ]
-top_airports <- head(top_airports, 5)
-last_airports <- df %>% group_by(dest) %>% summarize(num_flights = n())
-last_airports <- subset(last_airports, last_airports$num_flights > 100)
-last_airports <- last_airports[order(last_airports$num_flights), ]
-last_airports <- head(last_airports, 5)
-df$pop_dest <- ifelse(df$dest %in% top_airports$dest, "Popular", 0)
-df$pop_dest <- ifelse(df$dest %in% last_airports$dest, "Unpopular", df$pop_dest)
-head(subset(df, df$pop_dest != 0), 5)
-```
-
-We can also visualize the distribution of departure delay at our top airports in order to see if flights are more likely to be delayed when headed to more popular destinations.
-
-```{r airport boxplots}
-ggplot(subset(df, df$pop_dest != 0), aes(x=factor(dest), y=log(dep_delay))) + geom_boxplot(varwidth=TRUE, fill = '#774184') +
-  ggtitle('Distribution of Positive Delay in the busiest and least busiest Airports') +
-  facet_grid(. ~ pop_dest) +
-  xlab("Airport") +
-  ylab("log(Delay in Minutes)") +
-  labs(caption = "Source: Final Project Dataset")
-```
-
-The delay distribution varies very little among the top 5 airports. The delay distribution between popular and unpopular airports does not differ as much as we hoped, so there's no insight to be made here. 
 
 ### Carrier
 
@@ -484,7 +459,7 @@ ggplot(df, aes(dep_delay, arr_delay)) +
 
 The two variables appear to have a roughly linear relationship, especially at higher values. There are exceptions to this, where a large number of flights experience high arrival delay even though they had zero departure delay. This can be explained by flights that had trouble landing because destination airport landing strips were busy. 
 
-We can construct a variable called diff_delay that measures the difference between departure delay and arrival delay. This will allow us to examine whether a departure delay is likely to be amended for. 
+We construct a variable called diff_delay that measures the difference between departure delay and arrival delay. This will allow us to examine whether a departure delay is likely to be amended for. 
 
 ```{r construct diff_delay}
 df$diff_delay <- df$dep_delay - df$arr_delay
@@ -512,14 +487,13 @@ We wish to explore any patterns relating departure delay and arrival delay. Does
 
 ```{r destination state arrival time}
 # data frame for the cleveland plot and map
-df$diff <- df$dep_delay - df$arr_delay
 flight <- df
 flight$dest_state <- factor(flight$dest_state)
 region_code <- c("1", "2", "3", "4", "5", "11", "12", "13", "14", "15", "16", "21", "22", "23", "31", "33", "34", "35", "36", "37", "38", "39", "41", "42", "43", "44", "45", "51", "52", "53", "54", "61", "62", "63", "64", "65", "66", "67", "71", "72", "73", "74", "81", "82", "83", "84", "85", "86", "87", "88", "91", "92", "93", "31")
 region_name <- c("Alaska", "Hawaii", "Puerto Rico", "U.S. Virgin Islands", "U.S. Pacific Trust Territories and Possessions", "Connecticut", "Maine", "Massachusetts", "New Hampshire", "Rhode Island", "Vermont", "New Jersey", "New York", "Pennsylvania", "Delware", "Florida", "Georgia", "Maryland", "North Carolina", "South Carolina", "Virginia", "West Virginia", "Illinois", "Indiana", "Michigan", "Ohio", "Wisconsin", "Alabama", "Kentucky", "Mississippi", "Tennessee", "Iowa", "Kansas", "Minnesota", "Missouri", "Nebraska", "North Dakota", "South Dakota", "Arkansas", "Louisiana", "Oklahoma", "Texas", "Arizona", "Colorado", "Idaho", "Montana", "Nevada", "New Mexico", "Utah", "Wyoming", "California", "Oregon", "Washington", "Delaware")
 flight$dest_state <- factor(flight$dest_state, region_code, region_name)
 
-# tidy data for clevelad plot and map
+# tidy data for cleveland plot and map
 flight_state <- flight %>%
   group_by(dest_state) %>%
   dplyr::summarize(sum_n = n(), sum_arr = sum(arr_delay), sum_dep = sum(dep_delay), sum_diff = sum(diff)) %>%
@@ -530,7 +504,7 @@ flight_state$dest_state <- reorder(flight_state$dest_state, flight_state$mean_ar
 ggplot(flight_state) +
   geom_point(aes(mean_arr, dest_state, color = 'mean_arr'), size = 3) +
   geom_point(aes(mean_dep, dest_state, color = 'mean_dep'), size = 3) +
-  labs(title = "Arrival and Departure Delay over States", x = "Average Delay in Mintutes", y = "", color = '') +
+  labs(title = "Arrival and Departure Delay over States", x = "Average Delay in Minutes", y = "", color = '') +
   theme(legend.position = 'bottom') + 
   scale_color_manual(name = '', values = c('mean_arr'= '#774184', 'mean_dep'='#4E8441'), labels=c("Arrival Delay", "Departure Delay"))
 
@@ -551,14 +525,14 @@ arr_map$render()
 
 Neither departure nor arrival delay are strongly associated with destination state. The five regions with highest arrival delays are New Jersey, Puerto Rico, the U.S Virgin Islands, Hawaii and New York. The five regions with lowest arrival delays are Virginia, Maryland, Utah, South Carolina and the U.S Pacific Trust Territories and Possessions.
 
-We surprisingly found the average departure delay is higher than the average arrival delay in all states, no matter their location or population density. This implies that pilots can make up time during flights after delayed departures. 
+We surprisingly found the average departure delay is higher than the average arrival delay in all states, no matter their location or population density.
 
 ```{r destination state delay time difference}
 # cleveland plot of time difference
 flight_state$dest_state <- reorder(flight_state$dest_state, flight_state$mean_diff)
 ggplot(flight_state) +
   geom_point(aes(mean_diff, dest_state), color = '#774184', size = 3) +
-  labs(title = "Difference between Departure and Arrival Delay over States", x = "Average Difference in Mintutes", y = "", color = '')
+  labs(title = "Difference between Departure and Arrival Delay over States", x = "Average Difference in Minutes", y = "", color = '')
 
 # generate diff map format for choropleth
 diff_map_form <- subset(flight_state, select = c('dest_state', 'mean_diff'))
@@ -576,7 +550,7 @@ diff_map$ggplot_scale = scale_fill_viridis(name = 'Average Difference in Minutes
 diff_map$render()
 ```
 
-To our surprise, flights to the Northwestern states (Washington, Oregon, Idaho, Montana, Wyoming, North Dakota and South Dakota) had a lower delay difference than did others. This contradicts our hypothesis that pilots can make up for time lost during longer flights. There doesn't appear to be a relationship between destination and the difference between arrival and departure delay. In addition to the Northwest states, Alaska, Hawaii, U.S. Virgin Islands and Mississippi also have a low make-up delay.
+To our surprise, flights to the Northwestern states (Washington, Oregon, Idaho, Montana, Wyoming, North Dakota and South Dakota) had a lower delay difference than the others. This contradicts our hypothesis that pilots can make up for time lost during longer flights. There doesn't appear to be a relationship between destination and the difference between arrival and departure delay. In addition to the Northwest states, Alaska, Hawaii, U.S. Virgin Islands and Mississippi also have a low make-up delay.
 
 # Executive summary
 
@@ -598,7 +572,6 @@ Note: the choice was made to start the x-axis at 4am since at all previous times
 
 ## Arrival and Departure Delays
 ```{r presentation hexbin}
-options(scipen=1)
 ggplot(df, aes(dep_delay, arr_delay)) +
   geom_hex(bins = 50) + 
   scale_fill_gradientn(colours = viridis(5, direction = 1)) +
@@ -607,7 +580,8 @@ ggplot(df, aes(dep_delay, arr_delay)) +
   guides(fill=guide_legend(title="Frequency")) +
   labs(caption = "Source: Final Project Dataset")
 ```
-It appears that there's generally a positive linear relationship between the two variables. The higher is departure delay, the higher is arrival delay. There are some exceptions, and it's important to note that a large number of flights have high arrival delays despite having almost no departure delay. We hypothesize that this occurs when the destination landing strip is too busy. Pilots are unable to make a landing at the scheduled time. However, a plane can't fly aimlessly for long. Is this more common for certain airlines or certain airports?
+It appears that there's generally a positive linear relationship between the two variables, debunking the common theory that pilots always make up for time lost. The evident vertical line indicates that flights with no departure delay are often delayed post take-off. We hypothesize that this occurs when the destination landing strip is too busy, forcing the plane to fly around the airport until a strip vacates. However, a plane can't fly aimlessly for long implying that there must be other underlying causes.
+
 
 ## Make-up Delay and State
 ```{r main choropleth}
@@ -619,10 +593,10 @@ diff_map$ggplot_scale = scale_fill_viridis(name = 'Difference in Minutes')
 diff_map$render()
 ```
 
-The Northwestern states; Washington, Oregon, Idaho, Montana, Wyoming, North Dakota and South Dakota have the lowest difference in separture and arrival delay. Again, this contradicts our hypothesis that longer flights allow a pilot to make-up for departure delays. The state with the highest mean difference in delays is New York, the complete opposite of what we hypothesized. Why short flights more often experience large differences in delay? 
+The Northwestern states; Washington, Oregon, Idaho, Montana, Wyoming, North Dakota and South Dakota have the lowest difference in departure and arrival delay. Again, this contradicts our hypothesis that longer flights allow a pilot to make-up for departure delays. The state with the highest mean difference in delays is New York, the complete opposite of what we expected. Why do short flights experience large differences in delay more often? 
 
 # Conclusion
 
-In this study, we used airline on-time performance data from the United States Department of Transportation to explore the performance of airlines departing New York in the fourth quarter of 2017. We analyzed departure time in relation to: flight date, distance, destination and carrier. We found that departure delays were higher during the holiday season, Thanksgiving and Christmas, and flights were more likely to depart early than late. In out data, the distance feature did not capture real-world distance travelled, but was an "as the crow flies" measurement of distance between origin and destination airports. For the most part, neither departure nor arrival delay were strongly associated with destination state. However, the Northwestern states experienced unusually small differences in departure and arrival delays. The carrier feature was not found to have a great impact on delay. After analyzing the flights' departure delays, we moved on to their arrival performance. There was a rough linear relationship between departure delay and arrival delay. Interestingly,  many flights arrived at their destination later than expected even when departing on time. Furthermore, the arrival delay  was not related to flight distance, reflected by destination state. Several airports showed higher arrival delays, such as Newark Liberty International Airport and San Francisco International Airport.  
+In our study, we used airline on-time performance data from the United States Department of Transportation to explore the performance of airlines departing New York in the fourth quarter of 2017. Our analysis first focused on the relationship between departure delay and the following: flight date, day of the week, destination and airline. The results showed that departure delays were higher during the holiday season, for both Thanksgiving and Christmas, and flights were more likely to depart early than late. Upon closer examination of the date variable, we discovered that weekend travellers are more likely to encounter delays and morning flights have a higher chance of departing on time. For the most part, neither destination state nor airline were strongly associated with departure delay. We then proceeded to examine the linear relationship between departure and arrival delay, in hopes of identifying any causal factors. To do so we constructed 'make-up delay', a variable measuring the difference between the two key features. Our spatial maps indicated that the Northwestern states experienced unusually small differences in make-up delay, providing evidence to reject our hypothesis that pilots can make up for time lost on long flights. We also identified two airports -- namely, Newark Liberty International and San Fransisco International -- that have a higher propensity to cause arrival delays. 
 
-Limited information and rough calculations from this dataset restricted us in our investigations. In this dataset, distance is calculated as the distance between two airports, not true  distance travelled. We are interested in the relationship between flight departure and arrival performance and it would be useful to know true distance from airplane meters. We are also curious about the number of passengers each airplane carried, which would add a new dimension to our analysis of flight performance. Another feature of our study was the relationship between departure delay and arrival delay. We are interested in analyzing more data to see whether this is a causal relationship. In addition, there were a number of flights which arrived late with on time or even early departures. The reasons behind this pattern could prompt further investigations.  
+Limited information and rough calculations from the dataset restricted us in our investigations. Distance was calculated as the distance between two airports, not true distance travelled. A more accurate figure, along with other flight metrics like number of passengers carried, would add a new dimension to our analysis. How does a fully-booked flight compare to an empty one? Does the number of passengers have an impact on delay? Further granularity in the form of additional variables would also allow us to more closely examine the relationship between arrival delay and departure delay. A variable stating the cause of the delay could prove to be the distinguishing factor between a positive and a negative make-up delay. 
