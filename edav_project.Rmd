@@ -55,7 +55,6 @@ library(choroplethr)
 library(choroplethrMaps)
 # Set default theme
 theme_set(theme_bw())
-
 options(scipen=1)
 ```
 
@@ -496,7 +495,7 @@ flight$dest_state <- factor(flight$dest_state, region_code, region_name)
 # tidy data for cleveland plot and map
 flight_state <- flight %>%
   group_by(dest_state) %>%
-  dplyr::summarize(sum_n = n(), sum_arr = sum(arr_delay), sum_dep = sum(dep_delay), sum_diff = sum(diff)) %>%
+  dplyr::summarize(sum_n = n(), sum_arr = sum(arr_delay), sum_dep = sum(dep_delay), sum_diff = sum(diff_delay)) %>%
   mutate(mean_arr = sum_arr/sum_n, mean_dep = sum_dep/sum_n, mean_diff = sum_diff/sum_n)
 
 # cleveland plot of arrival time and depature time
